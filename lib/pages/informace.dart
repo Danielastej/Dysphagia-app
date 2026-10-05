@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:a_dysfagie/models/card_sablona.dart';
 
 class Informace extends StatelessWidget {
   const Informace({super.key});
@@ -16,150 +17,18 @@ class Informace extends StatelessWidget {
       body: ListView(
         padding: const EdgeInsets.all(10),
         children: [
-          Card(
-            color: Colors.white,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadiusGeometry.circular(15)
-            ),
-            clipBehavior: Clip.antiAlias,
-            child: ExpansionTile(
-              backgroundColor: Colors.grey[200],
-              title: Text(
-                'Základní informace o dysfagii',
-                style: TextStyle(color: Colors.teal[700], fontSize: 22),
-              ),
-              children: [
-                ListTile(
-                  title: Text(
-                    'Co je to dysfagie?',
-                    style: TextStyle(
-                        color: Colors.teal[700],
-                        fontSize: 22),
-                  ),
-                  tileColor: Colors.white,
-                  onTap: (){
-
-                  },
-                ),
-                ListTile(
-                  title: Text(
-                    'Příznaky a příčiny',
-                    style: TextStyle(
-                        color: Colors.teal[700],
-                        fontSize: 22),
-                  ),
-                  tileColor: Colors.white,
-                  onTap: (){
-
-                  },
-                ),
-                ListTile(
-                  title: Text(
-                    'Základní lečba',
-                    style: TextStyle(
-                        color: Colors.teal[700],
-                        fontSize: 22),
-                  ),
-                  tileColor: Colors.white,
-                  onTap: (){
-
-                  },
-                ),
-                ListTile(
-                  title: Text(
-                    'Dysfagie v ČR',
-                    style: TextStyle(
-                        color: Colors.teal[700],
-                        fontSize: 22),
-                  ),
-                  tileColor: Colors.white,
-                  onTap: (){
-
-                  },
-                ),
-              ],
-            ),
-          ),
-          Card(
-            color: Colors.white,
-            shape: RoundedRectangleBorder(
-                borderRadius: BorderRadiusGeometry.circular(15)
-            ),
-            clipBehavior: Clip.antiAlias,
-            child: ExpansionTile(
-              backgroundColor: Colors.grey[200],
-              title: Text(
-                'Dysfagie u dětí',
-                style: TextStyle(color: Colors.teal[700], fontSize: 22),
-              ),
-              children: [
-                ListTile(
-                  title: Text(
-                    'Rané příznaky',
-                    style: TextStyle(
-                        color: Colors.teal[700],
-                        fontSize: 22),
-                  ),
-                  tileColor: Colors.white,
-                  onTap: (){
-
-                  },
-                ),
-                ListTile(
-                  title: Text(
-                    'Léčba dysfagie u dětských pacientů',
-                    style: TextStyle(
-                        color: Colors.teal[700],
-                        fontSize: 22),
-                  ),
-                  tileColor: Colors.white,
-                  onTap: (){
-
-                  },
-                )
-              ],
-            ),
-          ),
-          Card(
-            color: Colors.white,
-            shape: RoundedRectangleBorder(
-                borderRadius: BorderRadiusGeometry.circular(15)
-            ),
-            clipBehavior: Clip.antiAlias,
-            child: ExpansionTile(
-              backgroundColor: Colors.grey[200],
-              title: Text(
-                'Další info',
-                style: TextStyle(color: Colors.teal[700], fontSize: 22),
-              ),
-              children: [
-                ListTile(
-                  title: Text(
-                    '.....',
-                    style: TextStyle(
-                        color: Colors.teal[700],
-                        fontSize: 22),
-                  ),
-                  tileColor: Colors.white,
-                  onTap: (){
-
-                  },
-                ),
-                ListTile(
-                  title: Text(
-                    '.....',
-                    style: TextStyle(
-                        color: Colors.teal[700],
-                        fontSize: 22),
-                  ),
-                  tileColor: Colors.white,
-                  onTap: (){
-
-                  },
-                ),
-              ],
-            ),
-          ),
+          InfoKarta(
+              nadpis: 'Fáze polykání',
+              htmlPath: 'assets/html/faze_polykani_interaktivni.html'),
+          InfoKarta(
+              nadpis: 'Nervy a struktury polykání',
+              htmlPath: 'assets/html/nervy_a_struktury_polykani.html'),
+          InfoKarta(
+              nadpis: 'Režimová opatření',
+              htmlPath: 'assets/html/rezimova_opatreni_mobil_jeden_sloupec.html'),
+          InfoKarta(
+              nadpis: 'Správné polykání a aspirace',
+              htmlPath: 'assets/html/spravne_polykani_vs_aspirace.html')
         ],
       ),
     );
