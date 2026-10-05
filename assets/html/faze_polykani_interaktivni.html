@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Fáze polykání – interaktivní schéma</title>
+<style>
+  :root{
+    --bg:#ffffff;
+    --border:#e0ded4;
+    --surface-1:#f7f6f0;
+    --text-primary:#2c2c2a;
+    --text-secondary:#6b6b66;
+    --text-accent:#185fa5;
+    --line:#4a4a48;
+    --leader:#9c9a92;
+    --radius:8px;
+  }
+  html,body{margin:0;padding:0;background:var(--bg);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;}
+  .wrap{max-width:680px;margin:0 auto;padding:16px 12px 32px;}
+  svg{width:100%;height:auto;display:block;}
+  .t{font-size:14px;fill:var(--text-primary);}
+  .ts{font-size:12px;fill:var(--text-secondary);}
+  .th{font-size:14px;font-weight:600;fill:var(--text-primary);}
+  .leader{stroke:var(--leader);stroke-width:0.5;stroke-dasharray:3 2;fill:none;}
+  .play-row{display:flex;justify-content:center;margin-top:10px;}
+  .play-btn{border:1px solid var(--border);background:var(--surface-1);border-radius:var(--radius);padding:8px 18px;font-size:14px;cursor:pointer;color:var(--text-secondary);}
+  .play-btn.active{border-color:var(--text-accent);color:var(--text-accent);font-weight:600;}
+  .desc-panel{margin-top:14px;padding:0 4px;}
+  .desc{font-size:14px;line-height:1.6;color:var(--text-secondary);margin:8px 0;opacity:0.4;transition:opacity .3s;}
+  .desc b{font-weight:600;color:var(--text-primary);}
+  h2.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;}
+</style>
+</head>
+<body>
+<div class="wrap">
+<h2 class="sr-only">Interaktivní schéma polykání s textovým popisem každé fáze: klikněte na fázi pro zastavení animace a zvýraznění jejího popisu.</h2>
+<svg viewBox="0 0 680 620" role="img">
+<title>Interaktivní profil hlavy se strukturami hrdla a klikacími fázemi polykání</title>
+<desc>Lineární profil hlavy se strukturami hrdla. Čtyři klikací štítky nahoře umožňují zastavit animaci na dané fázi polykání a zobrazit její textový popis níže.</desc>
+<style>
+@keyframes bolusMove {
+0% { transform: translate(0,0); opacity:1; }
+20% { transform: translate(-45px,50px); }
+45% { transform: translate(-70px,110px); }
+70% { transform: translate(-70px,180px); }
+92% { transform: translate(-70px,230px); opacity:1; }
+100% { transform: translate(-70px,230px); opacity:0; }
+}
+@keyframes epiTilt { 0%,40%{transform:rotate(0deg)} 50%,65%{transform:rotate(-55deg)} 80%,100%{transform:rotate(0deg)} }
+@keyframes airClose { 0%,40%{opacity:0} 50%,65%{opacity:.55} 80%,100%{opacity:0} }
+@keyframes ph1 { 0%,12%{opacity:0.9} 20%,100%{opacity:0.2} }
+@keyframes ph2 { 0%,15%{opacity:0.2} 22%,38%{opacity:0.9} 44%,100%{opacity:0.2} }
+@keyframes ph3 { 0%,42%{opacity:0.2} 48%,66%{opacity:0.9} 72%,100%{opacity:0.2} }
+@keyframes ph4 { 0%,70%{opacity:0.2} 76%,96%{opacity:0.9} 100%{opacity:0.2} }
+#bolus.anim{animation:bolusMove 5s ease-in-out infinite;transform-origin:320px 222px;}
+#epiglottis.anim{animation:epiTilt 5s ease-in-out infinite;}
+#airway-close.anim{animation:airClose 5s ease-in-out infinite;}
+#ph1-rect.anim{animation:ph1 5s ease-in-out infinite;}
+#ph2-rect.anim{animation:ph2 5s ease-in-out infinite;}
+#ph3-rect.anim{animation:ph3 5s ease-in-out infinite;}
+#ph4-rect.anim{animation:ph4 5s ease-in-out infinite;}
+</style>
+<g style="cursor:pointer" onclick="setPhase(1)"><rect id="ph1-rect" class="anim" x="20" y="15" width="145" height="28" rx="14" fill="#F2A98A" opacity="0.3"/><text class="th" x="92" y="30" text-anchor="middle" dominant-baseline="central" fill="#8A4526">1 Příprava</text></g>
+<g style="cursor:pointer" onclick="setPhase(2)"><rect id="ph2-rect" class="anim" x="180" y="15" width="145" height="28" rx="14" fill="#FAC775" opacity="0.3"/><text class="th" x="252" y="30" text-anchor="middle" dominant-baseline="central" fill="#7A4E0A">2 Transport</text></g>
+<g style="cursor:pointer" onclick="setPhase(3)"><rect id="ph3-rect" class="anim" x="340" y="15" width="145" height="28" rx="14" fill="#F0A8C8" opacity="0.3"/><text class="th" x="412" y="30" text-anchor="middle" dominant-baseline="central" fill="#7A2F52">3 Faryngeální</text></g>
+<g style="cursor:pointer" onclick="setPhase(4)"><rect id="ph4-rect" class="anim" x="500" y="15" width="145" height="28" rx="14" fill="#C9B8E8" opacity="0.3"/><text class="th" x="572" y="30" text-anchor="middle" dominant-baseline="central" fill="#4A3170">4 Ezofageální</text></g>
+<path d="M220,55 C260,52 288,80 296,120 C300,140 315,155 325,175 C330,185 328,193 320,197 C322,207 318,215 308,220 C310,228 305,235 296,238 C290,248 278,255 264,258 L245,270 L230,560" fill="none" stroke="var(--line)" stroke-width="1.5" opacity="0.75"/>
+<path d="M220,55 C175,58 145,85 133,130 C123,168 121,210 128,248 C133,278 145,302 160,318 L172,560" fill="none" stroke="var(--line)" stroke-width="1.5" opacity="0.75"/>
+<path d="M262,118 Q278,108 292,116" stroke="var(--line)" stroke-width="1.5" fill="none" opacity="0.75"/>
+<path d="M268,130 Q278,124 288,131 Q278,138 268,130 Z" fill="none" stroke="var(--line)" stroke-width="1.2" opacity="0.75"/>
+<circle cx="278" cy="131" r="1.5" fill="var(--line)" opacity="0.75"/>
+<path d="M128,158 C116,161 110,178 118,195 C123,206 135,204 139,191 C143,178 138,165 128,158 Z" fill="none" stroke="var(--line)" stroke-width="1.2" opacity="0.75"/>
+<path d="M128,168 C123,173 123,183 130,189" stroke="var(--line)" stroke-width="1" fill="none" opacity="0.75"/>
+<path d="M318,180 Q322,185 318,191" stroke="var(--line)" stroke-width="1" fill="none" opacity="0.75"/>
+<path d="M303,218 Q308,223 302,228" stroke="var(--line)" stroke-width="1" fill="none" opacity="0.75"/>
+<ellipse cx="298" cy="140" rx="10" ry="7" fill="#BFE0F5" stroke="#7FB8E0" stroke-width="0.5"/>
+<path d="M270,146 C278,149 281,158 275,166 C269,169 264,163 264,155 C264,150 267,146 270,146 Z" fill="#A9CBB0" stroke="#6F9C7C" stroke-width="0.5"/>
+<path d="M271,164 C274,169 273,175 269,178 C265,175 265,168 268,164 Z" fill="#A9CBB0" stroke="#6F9C7C" stroke-width="0.5"/>
+<rect x="195" y="310" width="32" height="8" rx="4" fill="#E8DAB0" stroke="#C9B67E" stroke-width="0.5" opacity="0.9"/>
+<path d="M320,222 C296,216 268,218 248,232 C232,244 224,264 228,284 C232,302 248,312 266,308 C278,305 286,294 292,276 C298,260 304,240 310,228 C312,224 316,222 320,222 Z" fill="#F2A98A" opacity="0.95" stroke="#D9825E" stroke-width="0.5"/>
+<path d="M228,284 C231,296 240,305 253,308 C247,309 240,308 235,305 C230,298 228,291 228,284 Z" fill="#D9825E" opacity="0.4"/>
+<path d="M306,232 Q276,265 260,300" stroke="#B85A34" stroke-width="1" fill="none" opacity="0.6"/>
+<circle cx="302" cy="234" r="1.2" fill="#B85A34" opacity="0.5"/>
+<circle cx="294" cy="244" r="1.2" fill="#B85A34" opacity="0.5"/>
+<circle cx="285" cy="255" r="1.2" fill="#B85A34" opacity="0.5"/>
+<circle cx="275" cy="267" r="1.2" fill="#B85A34" opacity="0.5"/>
+<g id="epiglottis" class="anim" style="transform-origin:200px 356px"><path d="M195,350 C202,343 212,343 216,348 C210,359 202,367 193,368 C189,360 190,353 195,350 Z" fill="#F0A8C8" stroke="#D46B9A" stroke-width="0.5"/></g>
+<rect id="airway-close" class="anim" x="180" y="362" width="22" height="35" rx="10" fill="#E76A6A" opacity="0"/>
+<rect x="180" y="362" width="22" height="140" rx="10" fill="#85B7EB" opacity="0.6" stroke="#378ADD" stroke-width="0.5"/>
+<line x1="184" y1="380" x2="198" y2="380" stroke="#1F5A94" stroke-width="1" opacity="0.7"/>
+<line x1="184" y1="410" x2="198" y2="410" stroke="#1F5A94" stroke-width="1" opacity="0.7"/>
+<line x1="184" y1="440" x2="198" y2="440" stroke="#1F5A94" stroke-width="1" opacity="0.7"/>
+<line x1="184" y1="470" x2="198" y2="470" stroke="#1F5A94" stroke-width="1" opacity="0.7"/>
+<rect x="208" y="358" width="16" height="150" rx="8" fill="#C9B8E8" opacity="0.65" stroke="#8B6FC9" stroke-width="0.5"/>
+<path d="M255,260 C232,273 217,295 210,323 C207,337 208,350 214,360 L233,360 C230,340 231,317 238,295 C241,285 246,275 255,265 Z" fill="#FAC775" opacity="0.85"/>
+<path d="M248,275 C228,287 216,307 210,330 C208,342 209,353 214,361 L228,361 C226,345 227,325 233,307 C236,297 240,287 248,279 Z" fill="#EF9F27" opacity="0.6"/>
+<g id="bolus" class="anim"><circle cx="320" cy="222" r="8" fill="#D9A066" stroke="#B97D42" stroke-width="0.5"/></g>
+<line class="leader" x1="298" y1="140" x2="480" y2="75"/>
+<text class="th" x="486" y="71" style="fill:#5A9AC8">Nosní dutina</text>
+<text class="ts" x="486" y="89" style="fill:#3F8FC0">uzavře se měkkým patrem</text>
+<line class="leader" x1="270" y1="152" x2="480" y2="130"/>
+<text class="th" x="486" y="126" style="fill:#4F7A5C">Měkké patro</text>
+<text class="ts" x="486" y="144" style="fill:#6F9C7C">uzavírá vstup do nosu</text>
+<line class="leader" x1="280" y1="300" x2="480" y2="185"/>
+<text class="th" x="486" y="181" style="fill:#B85A34">Jazyk</text>
+<text class="ts" x="486" y="199" style="fill:#D9825E">hřbet s rýhou, kořen tlačí sousto dozadu</text>
+<line class="leader" x1="232" y1="320" x2="480" y2="240"/>
+<text class="th" x="486" y="236" style="fill:#8F5A0E">Hltan</text>
+<text class="ts" x="486" y="254" style="fill:#BA7517">stěna se stahuje a posouvá sousto</text>
+<line class="leader" x1="200" y1="358" x2="480" y2="295"/>
+<text class="th" x="486" y="291" style="fill:#B0508C">Epiglottis</text>
+<text class="ts" x="486" y="309" style="fill:#D46B9A">hrtanová příklopka, sklopí se a chrání dýchací cesty</text>
+<line class="leader" x1="211" y1="314" x2="480" y2="350"/>
+<text class="th" x="486" y="346" style="fill:#9C8A54">Jazylka</text>
+<text class="ts" x="486" y="364" style="fill:#B8A470">kost, na které je zavěšen kořen jazyka</text>
+<line class="leader" x1="191" y1="430" x2="480" y2="405"/>
+<text class="th" x="486" y="401" style="fill:#1F5A94">Hrtan a průdušnice</text>
+<text class="ts" x="486" y="419" style="fill:#378ADD">dýchací cesty, při polykání se uzavřou</text>
+<line class="leader" x1="216" y1="440" x2="480" y2="460"/>
+<text class="th" x="486" y="456" style="fill:#5A3F94">Jícen</text>
+<text class="ts" x="486" y="474" style="fill:#8B6FC9">vede sousto do žaludku</text>
+</svg>
+<div class="play-row">
+<button id="play-btn" class="play-btn active" onclick="playAnim()">▶ Přehrát animaci</button>
+</div>
+<div class="desc-panel">
+<p id="desc1" class="anim desc"><b>1. Orální přípravná fáze</b> — sousto je v ústech rozžvýkáno a promícháno se slinami pomocí zubů, jazyka a žvýkacích svalů, dokud nevznikne polykatelná homogenní hmota. Tato fáze je zcela vědomá a dobrovolná.</p>
+<p id="desc2" class="anim desc"><b>2. Orální transportní fáze</b> — jazyk se přitiskne k tvrdému patru a vlnovitým pohybem zatlačí sousto směrem dozadu k hltanu. Je to poslední fáze, kterou ještě vědomě ovládáme, než se spustí reflex.</p>
+<p id="desc3" class="anim desc"><b>3. Faryngeální fáze</b> — jakmile sousto podráždí smyslové receptory vzadu na jazyku, spustí se automatický, reflexní polykací děj: měkké patro uzavře vstup do nosu, hlasivky se sevřou, hrtan se zvedne a epiglottis se sklopí, takže se na okamžik zastaví dýchání a sousto bezpečně projde hltanem, aniž by sklouzlo do dýchacích cest.</p>
+<p id="desc4" class="anim desc"><b>4. Ezofageální fáze</b> — otevře se horní jícnový svěrač a sousto je vlnovitými stahy svaloviny (peristaltikou) posunováno jícnem až do žaludku. Celý proces řídí polykací centrum v prodloužené míše.</p>
+</div>
+</div>
+<script>
+function setAnim(on){
+['bolus','epiglottis','airway-close','ph1-rect','ph2-rect','ph3-rect','ph4-rect','desc1','desc2','desc3','desc4'].forEach(function(id){
+document.getElementById(id).classList.toggle('anim',on);
+});
+}
+var states={
+1:{b:'translate(0px,0px)',e:'rotate(0deg)',a:0},
+2:{b:'translate(-45px,50px)',e:'rotate(0deg)',a:0},
+3:{b:'translate(-70px,180px)',e:'rotate(-55deg)',a:0.55},
+4:{b:'translate(-70px,230px)',e:'rotate(0deg)',a:0}
+};
+function setPhase(n){
+setAnim(false);
+var s=states[n];
+var bolus=document.getElementById('bolus');
+var epi=document.getElementById('epiglottis');
+var air=document.getElementById('airway-close');
+bolus.style.transform=s.b;
+bolus.style.opacity=1;
+epi.style.transform=s.e;
+air.style.opacity=s.a;
+for(var i=1;i<=4;i++){
+document.getElementById('ph'+i+'-rect').style.opacity=(i===n?0.9:0.2);
+document.getElementById('desc'+i).style.opacity=(i===n?1:0.4);
+}
+document.getElementById('play-btn').classList.remove('active');
+}
+function playAnim(){
+setAnim(true);
+document.getElementById('play-btn').classList.add('active');
+}
+</script>
+</body>
+</html>
