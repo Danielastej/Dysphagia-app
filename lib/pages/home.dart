@@ -109,7 +109,9 @@ class _HomeState extends State<Home> {
                   ),
                 ),
                 IconButton(
-                  onPressed: (){},
+                  onPressed: (){
+                    Navigator.pushNamed(context, '/statistiky');
+                  },
                   icon: Icon(
                       Icons.bar_chart
                   ),

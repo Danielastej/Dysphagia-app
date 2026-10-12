@@ -5,6 +5,7 @@ import 'package:a_dysfagie/pages/loading.dart';
 import 'package:a_dysfagie/pages/nastaveni.dart';
 import 'package:a_dysfagie/pages/seznamcviku.dart';
 import 'package:a_dysfagie/pages/informace.dart';
+import 'package:a_dysfagie/pages/statistiky.dart';
 
 void main() async {
 
@@ -19,6 +20,7 @@ void main() async {
         '/nastaveni': (context) => Settings(),
         '/seznamcviku': (context) => Seznamcviku(),
         '/informace': (context) => Informace(),
+        '/statistiky': (context) => const StatistikyPage(),
       },
   ));
 }

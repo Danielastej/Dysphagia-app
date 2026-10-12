@@ -2,9 +2,9 @@ import 'package:a_dysfagie/models/cvik.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 List<Cvik> vsechnyCviky = [
-  Cvik(nazev: 'Cviceni polykani'),
-  Cvik(nazev: 'Posilovani jazyka'),
-  Cvik(nazev: 'Nejaky dalsi'),
+  Cvik(nazev: 'Cviceni polykani', videoPath: 'assets/videos/meow.mp4'),
+  Cvik(nazev: 'Posilovani jazyka', videoPath: 'assets/videos/meow.mp4'),
+  Cvik(nazev: 'Nejaky dalsi', videoPath: 'assets/videos/meow.mp4'),
 ];
 
 final _asyncPrefs = SharedPreferencesAsync();
