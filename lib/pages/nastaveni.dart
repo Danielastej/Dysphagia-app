@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class Settings extends StatefulWidget {
   const Settings({super.key});
@@ -8,6 +10,11 @@ class Settings extends StatefulWidget {
 }
 
 class _SettingsState extends State<Settings> {
+  Future<void> _logout() async {
+    await FirebaseAuth.instance.signOut();
+    if (!mounted) return;
+    Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
+  }
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -33,9 +40,18 @@ class _SettingsState extends State<Settings> {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text('Barva aplikace', style: TextStyle(color: Colors.teal[700], fontSize: 22),
+                    Text(
+                      'Barva aplikace',
+                      style: TextStyle(
+                          color: Colors.teal[700],
+                          fontSize: 22
+                      ),
                     ),
-                    Icon(Icons.palette_outlined, size: 25, color: Colors.teal[700],)
+                    Icon(
+                      Icons.palette_outlined,
+                      size: 25,
+                      color: Colors.teal[700],
+                    )
                   ],
                 ),
               ),
@@ -44,16 +60,23 @@ class _SettingsState extends State<Settings> {
             SizedBox(
               width: double.infinity,
               height: 70,
-              child:
-              ElevatedButton(onPressed: (){
-                Navigator.pushNamed(context, '/seznamcviku');
-              },
+              child: ElevatedButton(
+                onPressed: _logout,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.red[50],
+                ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text('Doktorský mód', style: TextStyle(color: Colors.teal[700], fontSize: 22),
+                    Text(
+                      'Odhlásit se',
+                      style: TextStyle(color: Colors.teal[700], fontSize: 22),
                     ),
-                    Icon(Icons.medical_services_rounded,size: 25,color: Colors.teal[700],)
+                    Icon(
+                      Icons.logout,
+                      size: 25,
+                      color: Colors.teal[700],
+                    ),
                   ],
                 ),
               ),
