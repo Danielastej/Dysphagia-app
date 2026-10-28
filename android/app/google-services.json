@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "247627226248",
+    "project_id": "aplikace-dysfagie",
+    "storage_bucket": "aplikace-dysfagie.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:247627226248:android:18fdb4e522f0cab3e9933d",
+        "android_client_info": {
+          "package_name": "com.example.a_dysfagie"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA7o02TXYT0lZJTBluGEQLBt07tgBXWEyQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
