@@ -18,17 +18,20 @@ class Informace extends StatelessWidget {
         padding: const EdgeInsets.all(10),
         children: [
           InfoKarta(
-              nadpis: 'Fáze polykání',
-              htmlPath: 'assets/html/faze_polykani_interaktivni.html'),
+              nadpis: 'Fyziologie polykání',
+              htmlPath: 'assets/html/1_fyziologie_polykani.html'),
           InfoKarta(
               nadpis: 'Nervy a struktury polykání',
-              htmlPath: 'assets/html/nervy_a_struktury_polykani.html'),
+              htmlPath: 'assets/html/2_nervy_polykani.html'),
+          InfoKarta(
+              nadpis: 'Správné a nesprávné polykání',
+              htmlPath: 'assets/html/3_spravne_nespravne_polykani.html'),
           InfoKarta(
               nadpis: 'Režimová opatření',
-              htmlPath: 'assets/html/rezimova_opatreni_mobil_jeden_sloupec.html'),
+              htmlPath: 'assets/html/4_rezimova_opatreni.html'),
           InfoKarta(
-              nadpis: 'Správné polykání a aspirace',
-              htmlPath: 'assets/html/spravne_polykani_vs_aspirace.html')
+              nadpis: 'Zdroje',
+              htmlPath: 'assets/html/5_zdroje.html'),
         ],
       ),
     );

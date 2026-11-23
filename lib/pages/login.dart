@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
@@ -15,33 +16,58 @@ class _LoginState extends State<Login> {
   final _nameController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
 
+  // Controllery a stav specifický pro pacienta
+  final _ageController = TextEditingController();
+  final _reasonController = TextEditingController();
+  String? _selectedGender;
+
   bool _isLogin = true;
   bool _isLoading = false;
   bool _obscurePassword = true;
   String _selectedRole = 'patient';
+
   @override
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
     _nameController.dispose();
+    _ageController.dispose();
+    _reasonController.dispose();
     super.dispose();
-    }
+  }
 
-    Future<void> _submitForm() async {
+  Future<void> _submitForm() async {
     final email = _emailController.text.trim();
     final password = _passwordController.text.trim();
     final confirmPassword = _confirmPasswordController.text.trim();
     final name = _nameController.text.trim();
+    final ageText = _ageController.text.trim();
+    final reason = _reasonController.text.trim();
 
+    // Základní kontrola společných polí
     if (email.isEmpty || password.isEmpty || (!_isLogin && name.isEmpty)) {
-    _showErrorDialog('Vyplňte prosím všechna pole.');
-    return;
+      _showErrorDialog('Vyplňte prosím všechna povinná pole.');
+      return;
     }
 
     if (!_isLogin && password != confirmPassword) {
       _showErrorDialog('Zadaná hesla se neshodují.');
       return;
+    }
+
+    // Kontrola doplňkových polí, pokud se registruje pacient
+    int? parsedAge;
+    if (!_isLogin && _selectedRole == 'patient') {
+      if (ageText.isEmpty || _selectedGender == null || reason.isEmpty) {
+        _showErrorDialog('Vyplňte prosím věk, pohlaví a důvod obtíží.');
+        return;
+      }
+      parsedAge = int.tryParse(ageText);
+      if (parsedAge == null || parsedAge <= 0 || parsedAge > 120) {
+        _showErrorDialog('Zadejte prosím platný věk (1–120 let).');
+        return;
+      }
     }
 
     setState(() => _isLoading = true);
@@ -52,7 +78,6 @@ class _LoginState extends State<Login> {
         UserCredential userCredential = await FirebaseAuth.instance
             .signInWithEmailAndPassword(email: email, password: password);
 
-        // Načtení role z Firestore
         DocumentSnapshot userDoc = await FirebaseFirestore.instance
             .collection('users')
             .doc(userCredential.user!.uid)
@@ -64,7 +89,6 @@ class _LoginState extends State<Login> {
           String role = userDoc.get('role') ?? 'patient';
           _navigateByRole(role);
         } else {
-          // Výchozí přesměrování na pacienta, pokud profil neexistuje
           Navigator.pushReplacementNamed(context, '/home');
         }
       } else {
@@ -72,17 +96,26 @@ class _LoginState extends State<Login> {
         UserCredential userCredential = await FirebaseAuth.instance
             .createUserWithEmailAndPassword(email: email, password: password);
 
-        // Uložení detailů uživatele a jeho role do Firestore
-        await FirebaseFirestore.instance
-            .collection('users')
-            .doc(userCredential.user!.uid)
-            .set({
+        // Společná data pro pacienta i lékaře
+        final Map<String, dynamic> userData = {
           'uid': userCredential.user!.uid,
           'name': name,
           'email': email,
-          'role': _selectedRole, // 'patient' nebo 'doctor'
+          'role': _selectedRole,
           'createdAt': FieldValue.serverTimestamp(),
-        });
+        };
+
+        // Doplňková data pouze pro pacienta
+        if (_selectedRole == 'patient') {
+          userData['age'] = parsedAge;
+          userData['gender'] = _selectedGender;
+          userData['illnessReason'] = reason;
+        }
+
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(userCredential.user!.uid)
+            .set(userData);
 
         if (!mounted) return;
 
@@ -125,9 +158,8 @@ class _LoginState extends State<Login> {
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
-    }
+  }
 
-  // Přesměrování podle role
   void _navigateByRole(String role) {
     if (role == 'doctor') {
       Navigator.pushReplacementNamed(context, '/doctor_home');
@@ -184,10 +216,11 @@ class _LoginState extends State<Login> {
                   ),
                   const SizedBox(height: 24),
 
-                  // Jméno (zobrazí se pouze při registraci)
+                  // Jméno a příjmení (společné při registraci)
                   if (!_isLogin) ...[
                     TextField(
                       controller: _nameController,
+                      textCapitalization: TextCapitalization.words,
                       decoration: const InputDecoration(
                         labelText: 'Jméno a příjmení',
                         prefixIcon: Icon(Icons.person),
@@ -218,7 +251,9 @@ class _LoginState extends State<Login> {
                       prefixIcon: const Icon(Icons.lock),
                       suffixIcon: IconButton(
                         icon: Icon(
-                          _obscurePassword ? Icons.visibility : Icons.visibility_off,
+                          _obscurePassword
+                              ? Icons.visibility
+                              : Icons.visibility_off,
                         ),
                         onPressed: () {
                           setState(() {
@@ -231,21 +266,23 @@ class _LoginState extends State<Login> {
                   ),
                   const SizedBox(height: 16),
 
-                  // Potvrzení hesla (zobrazí se pouze při registraci)
+                  // Potvrzení hesla (společné při registraci)
                   if (!_isLogin) ...[
                     TextField(
                       controller: _confirmPasswordController,
-                      obscureText: _obscurePassword, // Používá stejný stav
+                      obscureText: _obscurePassword,
                       decoration: InputDecoration(
                         labelText: 'Potvrzení hesla',
                         prefixIcon: const Icon(Icons.lock_outline),
                         suffixIcon: IconButton(
                           icon: Icon(
-                            _obscurePassword ? Icons.visibility : Icons.visibility_off,
+                            _obscurePassword
+                                ? Icons.visibility
+                                : Icons.visibility_off,
                           ),
                           onPressed: () {
                             setState(() {
-                              _obscurePassword = !_obscurePassword; // Přepne obě políčka
+                              _obscurePassword = !_obscurePassword;
                             });
                           },
                         ),
@@ -253,10 +290,8 @@ class _LoginState extends State<Login> {
                       ),
                     ),
                     const SizedBox(height: 16),
-                  ],
 
-                  // Výběr role (zobrazí se pouze při registraci)
-                  if (!_isLogin) ...[
+                    // Výběr role pomocí moderního RadioGroup
                     const Align(
                       alignment: Alignment.centerLeft,
                       child: Text(
@@ -264,31 +299,114 @@ class _LoginState extends State<Login> {
                         style: TextStyle(fontWeight: FontWeight.bold),
                       ),
                     ),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: RadioListTile<String>(
-                            title: const Text('Pacient'),
-                            value: 'patient',
-                            groupValue: _selectedRole,
-                            onChanged: (val) {
-                              setState(() => _selectedRole = val!);
-                            },
+                    RadioGroup<String>(
+                      groupValue: _selectedRole,
+                      onChanged: (val) {
+                        if (val != null) {
+                          setState(() => _selectedRole = val);
+                        }
+                      },
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: RadioListTile<String>(
+                              contentPadding: EdgeInsets.zero,
+                              title: const Text('Pacient'),
+                              value: 'patient',
+                            ),
                           ),
-                        ),
-                        Expanded(
-                          child: RadioListTile<String>(
-                            title: const Text('Lékař'),
-                            value: 'doctor',
-                            groupValue: _selectedRole,
-                            onChanged: (val) {
-                              setState(() => _selectedRole = val!);
-                            },
+                          Expanded(
+                            child: RadioListTile<String>(
+                              contentPadding: EdgeInsets.zero,
+                              title: const Text('Lékař'),
+                              value: 'doctor',
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 8),
+
+                    // --- POLE SPECIFICKÁ POUZE PRO PACIENTA ---
+                    if (_selectedRole == 'patient') ...[
+                      const Divider(),
+                      const SizedBox(height: 8),
+                      const Align(
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          'Údaje pro rehabilitaci:',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: Colors.teal,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+
+                      // Věk a Pohlaví vedle sebe
+                      Row(
+                        children: [
+                          Expanded(
+                            flex: 2,
+                            child: TextField(
+                              controller: _ageController,
+                              keyboardType: TextInputType.number,
+                              inputFormatters: [
+                                FilteringTextInputFormatter.digitsOnly,
+                              ],
+                              decoration: const InputDecoration(
+                                labelText: 'Věk',
+                                border: OutlineInputBorder(),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            flex: 3,
+                            child: DropdownButtonFormField<String>(
+                              initialValue: _selectedGender,
+                              decoration: const InputDecoration(
+                                labelText: 'Pohlaví',
+                                border: OutlineInputBorder(),
+                              ),
+                              items: const [
+                                DropdownMenuItem(
+                                  value: 'Žena',
+                                  child: Text('Žena'),
+                                ),
+                                DropdownMenuItem(
+                                  value: 'Muž',
+                                  child: Text('Muž'),
+                                ),
+                                DropdownMenuItem(
+                                  value: 'Jiné / Neuvedeno',
+                                  child: Text('Neuvedeno'),
+                                ),
+                              ],
+                              onChanged: (val) {
+                                setState(() => _selectedGender = val);
+                              },
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+
+                      // Důvod nemoci / diagnóza
+                      TextField(
+                        controller: _reasonController,
+                        maxLines: 2,
+                        textCapitalization: TextCapitalization.sentences,
+                        decoration: const InputDecoration(
+                          labelText: 'Důvod nemoci / příčina obtíží',
+                          hintText:
+                          'např. po CMP, neurologické onemocnění, operace...',
+                          prefixIcon: Icon(Icons.medical_information),
+                          border: OutlineInputBorder(),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                    ],
                   ],
 
                   // Tlačítko pro odeslání

@@ -19,7 +19,7 @@ class _CviceniState extends State<Cviceni> {
    }
    else {
      Navigator.pop(context);
-     ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Vse dokonceno!')),
+     ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Vše dokončeno!')),
      );
    }
   }
@@ -42,37 +42,138 @@ class _CviceniState extends State<Cviceni> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text(
-              aktualnicvik.nazev,
-              style: TextStyle(
-                  fontSize: 28,
-                  color: Colors.teal[900]
+            Expanded(
+              child: SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    // Kategorie cviku
+                    Text(
+                      aktualnicvik.kategorie.toUpperCase(),
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 1.1,
+                        color: Colors.teal[800],
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 4),
+
+                    // Název cviku
+                    Text(
+                      aktualnicvik.nazev,
+                      style: TextStyle(
+                        fontSize: 26,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.teal[900],
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 15),
+
+                    // Zástupný box pro video
+                    Container(
+                      height: 220,
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        color: Colors.grey[400],
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Text(
+                        'Tady bude video',
+                        style: TextStyle(fontSize: 16),
+                      ),
+                    ),
+                    const SizedBox(height: 15),
+
+                    // Popisek provedení pro pacienta
+                    Container(
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Postup cvičení:',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.teal[900],
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            aktualnicvik.popis,
+                            style: const TextStyle(
+                              fontSize: 18,
+                              height: 1.4,
+                              color: Colors.black87,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    // Pomůcky a upozornění (zobrazí se jen tehdy, když u cviku existují)
+                    if (aktualnicvik.pomucky != null &&
+                        aktualnicvik.pomucky!.isNotEmpty) ...[
+                      const SizedBox(height: 12),
+                      Container(
+                        padding: const EdgeInsets.all(14),
+                        decoration: BoxDecoration(
+                          color: Colors.amber[50],
+                          border: Border.all(color: Colors.amber.shade700, width: 1.5),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Icon(
+                              Icons.info_outline,
+                              color: Colors.amber[900],
+                              size: 24,
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Text(
+                                aktualnicvik.pomucky!,
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w500,
+                                  color: Colors.amber[900],
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
               ),
-              textAlign: TextAlign.center,
             ),
-            SizedBox(height: 15,),
-            Container(
-              height: 220,
-              decoration: BoxDecoration(
-                color: Colors.grey[400],
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Text(
-                'Tady bude video', textAlign: TextAlign.center,
-              ),
-            ),
-            SizedBox(height: 15,),
+
+            const SizedBox(height: 12),
+
+            // Spodní tlačítko pro posun na další cvik
             ElevatedButton(
               onPressed: _posunNaDalsi,
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.teal[700],
                 padding: const EdgeInsets.symmetric(vertical: 15),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
               ),
               child: Text(
                 currentIndex == widget.vybraneCviky.length - 1
-                    ? 'Dokoncit cviceni'
-                    : 'Dalsi cvik',
-                style: TextStyle(fontSize: 20,color: Colors.white),
+                    ? 'Dokončit cvičení'
+                    : 'Další cvik',
+                style: const TextStyle(fontSize: 20, color: Colors.white),
               ),
             ),
           ],

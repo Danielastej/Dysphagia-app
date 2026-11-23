@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:a_dysfagie/models/cvik.dart';
+import 'package:a_dysfagie/data/cviky_data.dart';
 import 'package:a_dysfagie/pages/home.dart';
 
 class DoctorHome extends StatefulWidget {
@@ -12,12 +14,6 @@ class DoctorHome extends StatefulWidget {
 
 class _DoctorHomeState extends State<DoctorHome> {
   final User? currentUser = FirebaseAuth.instance.currentUser;
-  final List<String> availableExercises = [
-    'Cviceni polykani',
-    'Posilovani jazyka',
-    'Nejaky dalsi',
-  ];
-
   Future<void> _logout() async {
     await FirebaseAuth.instance.signOut();
     if (!mounted) return;
@@ -50,7 +46,6 @@ class _DoctorHomeState extends State<DoctorHome> {
               final email = emailController.text.trim();
               if (email.isEmpty) return;
 
-              // Najdeme pacienta v databázi podle e-mailu
               final query = await FirebaseFirestore.instance
                   .collection('users')
                   .where('email', isEqualTo: email)
@@ -59,7 +54,6 @@ class _DoctorHomeState extends State<DoctorHome> {
 
               if (query.docs.isNotEmpty) {
                 final patientDoc = query.docs.first;
-                // Nastavíme u pacienta doctorId na ID přihlášeného doktora
                 await FirebaseFirestore.instance
                     .collection('users')
                     .doc(patientDoc.id)
@@ -85,6 +79,7 @@ class _DoctorHomeState extends State<DoctorHome> {
       ),
     );
   }
+
   void _editPatientExercises(String patientId, String patientName) async {
     // Načteme stávající nastavené cviky pacienta z Firestore
     final docSnap = await FirebaseFirestore.instance
@@ -100,6 +95,13 @@ class _DoctorHomeState extends State<DoctorHome> {
       frequency = docSnap.get('frequency') ?? '3x týdně';
     }
 
+    // Seskupíme všech 36 cviků ze souboru cviky_data.dart podle kategorie
+    final Map<String, List<Cvik>> cvikyPodleKategorie = {};
+    for (var cvik in vsechnyCviky) {
+      cvikyPodleKategorie.putIfAbsent(cvik.kategorie, () => []).add(cvik);
+    }
+    final kategorieList = cvikyPodleKategorie.keys.toList();
+
     if (!mounted) return;
 
     showModalBottomSheet(
@@ -111,79 +113,128 @@ class _DoctorHomeState extends State<DoctorHome> {
       builder: (ctx) {
         return StatefulBuilder(
           builder: (BuildContext context, StateSetter setModalState) {
-            return Padding(
-              padding: EdgeInsets.only(
-                top: 20,
-                left: 20,
-                right: 20,
-                bottom: MediaQuery.of(context).viewInsets.bottom + 20,
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Cviky pro: $patientName',
-                    style: const TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
+            return SizedBox(
+              // Okno zabere 80 % výšky obrazovky, aby se seznam pohodlně posouval
+              height: MediaQuery.of(context).size.height * 0.8,
+              child: Padding(
+                padding: EdgeInsets.only(
+                  top: 20,
+                  left: 20,
+                  right: 20,
+                  bottom: MediaQuery.of(context).viewInsets.bottom + 20,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Cviky pro: $patientName',
+                      style: const TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 16),
-                  const Text(
-                    'Zaškrtněte cviky, které má pacient provádět:',
-                    style: TextStyle(color: Colors.grey),
-                  ),
-                  const SizedBox(height: 10),
-
-                  // Seznam zaškrtávacích políček pro jednotlivé cviky
-                  ...availableExercises.map((exercise) {
-                    final isChecked = currentAssigned.contains(exercise);
-                    return CheckboxListTile(
-                      title: Text(exercise),
-                      value: isChecked,
-                      onChanged: (bool? val) {
-                        setModalState(() {
-                          if (val == true) {
-                            currentAssigned.add(exercise);
-                          } else {
-                            currentAssigned.remove(exercise);
-                          }
-                        });
-                      },
-                    );
-                  }),
-
-                  const SizedBox(height: 16),
-                  // Uložení do Firestore
-                  SizedBox(
-                    width: double.infinity,
-                    height: 48,
-                    child: ElevatedButton(
-                      onPressed: () async {
-                        await FirebaseFirestore.instance
-                            .collection('assigned_exercises')
-                            .doc(patientId)
-                            .set({
-                          'patientId': patientId,
-                          'doctorId': currentUser?.uid,
-                          'exercises': currentAssigned,
-                          'frequency': frequency,
-                          'updatedAt': FieldValue.serverTimestamp(),
-                        });
-
-                        if (!mounted) return;
-                        Navigator.pop(ctx);
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Plán cvičení byl úspěšně uložen.'),
-                          ),
-                        );
-                      },
-                      child: const Text('ULOŽIT PLÁN CVIČENÍ'),
+                    const SizedBox(height: 6),
+                    Text(
+                      'Vybráno cviků: ${currentAssigned.length}',
+                      style: TextStyle(
+                        color: Colors.teal[700],
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
-                  ),
-                ],
+                    const SizedBox(height: 12),
+
+                    // Posouvatelný seznam kategorií a cviků
+                    Expanded(
+                      child: ListView.builder(
+                        itemCount: kategorieList.length,
+                        itemBuilder: (context, index) {
+                          final kategorie = kategorieList[index];
+                          final cvikyVKategorii = cvikyPodleKategorie[kategorie]!;
+
+                          // Spočítáme, kolik cviků v této kategorii už je zaškrtnutých
+                          final pocetVybranych = cvikyVKategorii
+                              .where((c) => currentAssigned.contains(c.nazev))
+                              .length;
+
+                          return Card(
+                            margin: const EdgeInsets.only(bottom: 8),
+                            child: ExpansionTile(
+                              initiallyExpanded: pocetVybranych > 0,
+                              title: Text(
+                                kategorie,
+                                style: const TextStyle(fontWeight: FontWeight.bold),
+                              ),
+                              subtitle: pocetVybranych > 0
+                                  ? Text(
+                                'Vybráno: $pocetVybranych z ${cvikyVKategorii.length}',
+                                style: TextStyle(color: Colors.teal[700]),
+                              )
+                                  : null,
+                              children: cvikyVKategorii.map((cvik) {
+                                final isChecked = currentAssigned.contains(cvik.nazev);
+                                return CheckboxListTile(
+                                  title: Text(cvik.nazev),
+                                  subtitle: cvik.pomucky != null
+                                      ? Text(
+                                    cvik.pomucky!,
+                                    style: const TextStyle(fontSize: 12),
+                                  )
+                                      : null,
+                                  value: isChecked,
+                                  activeColor: Colors.teal[700],
+                                  onChanged: (bool? val) {
+                                    setModalState(() {
+                                      if (val == true) {
+                                        currentAssigned.add(cvik.nazev);
+                                      } else {
+                                        currentAssigned.remove(cvik.nazev);
+                                      }
+                                    });
+                                  },
+                                );
+                              }).toList(),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+
+                    const SizedBox(height: 12),
+
+                    // Spodní tlačítko pro uložení do Firestore
+                    SizedBox(
+                      width: double.infinity,
+                      height: 48,
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.teal[700],
+                          foregroundColor: Colors.white,
+                        ),
+                        onPressed: () async {
+                          await FirebaseFirestore.instance
+                              .collection('assigned_exercises')
+                              .doc(patientId)
+                              .set({
+                            'patientId': patientId,
+                            'doctorId': currentUser?.uid,
+                            'exercises': currentAssigned,
+                            'frequency': frequency,
+                            'updatedAt': FieldValue.serverTimestamp(),
+                          });
+
+                          if (!mounted) return;
+                          Navigator.pop(ctx);
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Plán cvičení byl úspěšně uložen.'),
+                            ),
+                          );
+                        },
+                        child: const Text('ULOŽIT PLÁN CVIČENÍ'),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             );
           },
@@ -200,7 +251,6 @@ class _DoctorHomeState extends State<DoctorHome> {
         foregroundColor: Colors.white,
         title: const Text('Lékařský panel'),
         actions: [
-          // TLAČÍTKO PRO SPUŠTĚNÍ PACIENTSKÉ APLIKACE V DEMO REŽIMU
           TextButton.icon(
             onPressed: () {
               Navigator.push(
@@ -224,7 +274,6 @@ class _DoctorHomeState extends State<DoctorHome> {
         ],
       ),
       body: StreamBuilder<QuerySnapshot>(
-        // Načítáme reálně z databáze pouze pacienty, kteří patří tomuto doktorovi
         stream: FirebaseFirestore.instance
             .collection('users')
             .where('role', isEqualTo: 'patient')
