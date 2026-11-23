@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Fáze polykání</title>
+<style>
+  /* ===== SPOLEČNÝ STYL APLIKACE – stejný ve všech modulech ===== */
+  :root{
+    --bg:#FBF8F3; --card:#FFFFFF; --text:#2B2735; --muted:#5C566B; --line:#E3DCEE; --focus:#5E4F99;
+    /* paleta: světlá (pozadí) / pastel (kresba) / obrys / tmavá (text) */
+    --lav:#E6E0F5;   --lav-p:#CDC0EC;   --lav-e:#9C89CF;   --lav-d:#5E4F99;
+    --mint:#DDF0E6;  --mint-p:#A6D9BC;  --mint-e:#6DB08E;  --mint-d:#2F6B52;
+    --peach:#FDE6D8; --peach-p:#F4C097; --peach-e:#D9935E; --peach-d:#9A4A22;
+    --blue:#E1EEF9;  --blue-p:#B3D0EE;  --blue-e:#7FA6D1;  --blue-d:#2D5B86;
+    --rose:#FBE3EC;  --rose-p:#EFAFC6;  --rose-e:#CF7C9C;  --rose-d:#9B3D62;
+    --teal:#DDF1F3;  --teal-p:#A7DADF;  --teal-e:#6FB5BB;  --teal-d:#2E6E74;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;font-size:18px;line-height:1.45}
+  button{touch-action:manipulation;font:inherit}
+  :focus-visible{outline:4px solid var(--focus);outline-offset:2px}
+  [hidden]{display:none !important}
+  .wrap{max-width:520px;margin:0 auto;padding:calc(12px + env(safe-area-inset-top)) 14px calc(28px + env(safe-area-inset-bottom))}
+  header h1{font-size:1.35rem;margin:4px 0 2px;color:var(--lav-d);line-height:1.25}
+  header p{margin:0 0 12px;color:var(--muted);font-size:.9rem}
+  /* výběr (fáze, nervy, …) */
+  .pills{display:grid;grid-template-columns:repeat(var(--cols,4),1fr);gap:6px;margin-bottom:10px}
+  .pill{position:relative;border:2px solid var(--line);background:var(--card);border-radius:14px;padding:12px 2px 6px;min-height:64px;font-size:.78rem;color:var(--text);cursor:pointer;text-align:center;line-height:1.2;overflow:hidden}
+  .pill b{display:block;font-size:1.25rem;color:var(--pd,var(--lav-d))}
+  .pill::before{content:"";position:absolute;left:0;right:0;top:0;height:8px;background:var(--pb,var(--lav-p))}
+  .pill[aria-pressed="true"],.pill[aria-current="step"]{background:var(--ps,var(--lav));border-color:var(--pe,var(--lav-e))}
+  /* obrázek */
+  .stage{background:var(--card);border-radius:20px;border:2px solid var(--line);padding:6px 6px 10px}
+  svg{width:100%;height:auto;display:block}
+  .progress{height:8px;background:var(--lav);border-radius:6px;margin:6px 6px 0;overflow:hidden}
+  .progress i{display:block;height:100%;width:0;background:var(--lav-d);border-radius:6px}
+  /* tlačítka */
+  .controls{display:grid;grid-template-columns:1fr 1.35fr 1fr;gap:8px;margin:10px 4px 0}
+  .btn{min-height:58px;border-radius:14px;border:2px solid var(--lav-d);background:var(--card);color:var(--lav-d);font-size:.95rem;font-weight:700;cursor:pointer;padding:6px 8px}
+  .btn.primary{background:var(--lav-d);color:#fff}
+  .btn:disabled{opacity:.35;cursor:default}
+  .btn.all{display:block;width:100%;margin:12px 0 0;background:var(--mint);border-color:var(--mint-d);color:var(--mint-d);font-size:1rem;min-height:60px}
+  .btn.all.on{background:var(--mint-d);color:#fff}
+  /* textový panel */
+  .panel{background:var(--card);border-radius:20px;border:2px solid var(--line);padding:16px 18px;margin-top:12px}
+  .panel h2{margin:0 0 6px;font-size:1.25rem;color:var(--lav-d);line-height:1.25;display:flex;align-items:center;gap:10px}
+  .panel .sub{margin:-2px 0 8px;color:var(--muted);font-size:.9rem;font-style:italic}
+  .chip{flex:none;min-width:40px;height:40px;padding:0 6px;border-radius:20px;border:2px solid;display:inline-grid;place-items:center;font-size:1rem;font-weight:800}
+  .badges{display:flex;flex-wrap:wrap;gap:6px;margin:4px 0 12px}
+  .badge{border-radius:999px;padding:3px 12px;font-size:.85rem;font-weight:700}
+  .b-mint{background:var(--mint);color:var(--mint-d)}
+  .b-peach{background:var(--peach);color:var(--peach-d)}
+  .b-blue{background:var(--blue);color:var(--blue-d)}
+  .b-lav{background:var(--lav);color:var(--lav-d)}
+  .panel ul{padding-left:1.1em;margin:0}
+  .panel li{margin-bottom:8px}
+  .panel h3{font-size:1rem;margin:14px 0 6px}
+  .warn{background:var(--peach);color:var(--peach-d);border-radius:12px;padding:10px 12px;font-size:.95rem;margin-top:10px}
+  .row{display:flex;align-items:center;gap:12px;padding:10px 0;border:0;border-top:1px solid var(--line);cursor:pointer;background:none;width:100%;text-align:left;color:var(--text)}
+  .row b{display:block}
+  .row small{color:var(--muted);font-size:.88rem;line-height:1.3;display:block}
+  /* přepínače a poznámka */
+  .toggles{display:flex;flex-direction:column;gap:4px;margin-top:12px;font-size:.95rem}
+  .toggles label{display:flex;align-items:center;gap:12px;cursor:pointer;border-radius:10px;padding:8px 4px;min-height:48px}
+  .toggles input{width:28px;height:28px;accent-color:var(--lav-d);flex:none}
+  .note{font-size:.82rem;color:var(--muted);margin-top:14px}
+  /* ===== konec společného stylu ===== */
+  /* SVG */
+  .lbl rect{fill:#fff;stroke:#CFC6E3;stroke-width:1.5}
+  .lbl text{font-size:17px;fill:#2B2735;font-family:inherit}
+  .lbl line{stroke:#9C90BF;stroke-width:1.8}
+  .air{fill:#EEF6FC}
+  #airflow{fill:none;stroke:#7FB2DC;stroke-width:3;stroke-dasharray:8 9;stroke-linecap:round}
+  #airflow.run{animation:flow 1.2s linear infinite}
+  @keyframes flow{to{stroke-dashoffset:-34}}
+  @media (prefers-reduced-motion:reduce){#airflow.run{animation:none}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Jak polykáme</h1>
+    <p>Vyberte fázi nebo stiskněte <b>Přehrát</b>.</p>
+  </header>
+
+  <nav class="pills" aria-label="Fáze polykání">
+    <button class="pill" data-i="0"><b>1</b>Přípravná</button>
+    <button class="pill" data-i="1"><b>2</b>Orální</button>
+    <button class="pill" data-i="2"><b>3</b>Hltanová</button>
+    <button class="pill" data-i="3"><b>4</b>Jícnová</button>
+  </nav>
+
+    <section class="stage">
+      <svg id="svg" viewBox="84 8 420 552" role="img" aria-labelledby="svgDesc">
+        <desc id="svgDesc">Schematický boční řez hlavou a krkem s průchodem sousta.</desc>
+        <!-- hlava -->
+        <path d="M320 18 C420 18 480 80 480 170 C480 240 455 290 432 330 L428 560 L262 560 L262 452 C262 432 278 420 278 400 C278 382 266 368 248 360 C218 348 186 337 160 320 C140 306 128 292 130 274 L121 263 L127 251 L119 241 L125 230 C117 222 115 210 111 199 L95 182 C100 168 115 160 128 140 C130 80 200 18 320 18 Z" fill="#FCE7DA" stroke="#E7C3AE" stroke-width="2"/>
+        <!-- trup pod krkem (ukáže se při posunu pohledu v jícnové fázi) -->
+        <path d="M262 552 L262 600 C258 650 238 690 228 760 L222 800 L478 800 L472 742 C464 684 442 642 428 600 L428 552 Z" fill="#FCE7DA"/>
+        <path d="M262 556 L262 600 C258 650 238 690 228 760 L222 800 M428 556 L428 600 C442 642 464 684 472 742 L478 800" fill="none" stroke="#E7C3AE" stroke-width="2"/>
+        <!-- páteř -->
+        <g fill="#ECE6F6" stroke="#D5CCE8" stroke-width="1.5">
+          <rect x="392" y="565" width="36" height="44" rx="8"/><rect x="394" y="615" width="36" height="44" rx="8"/>
+          <rect x="397" y="665" width="36" height="44" rx="8"/><rect x="400" y="715" width="36" height="44" rx="8"/>
+          <rect x="403" y="765" width="36" height="44" rx="8"/>
+          <rect x="392" y="215" width="36" height="44" rx="8"/><rect x="392" y="265" width="36" height="44" rx="8"/>
+          <rect x="392" y="315" width="36" height="44" rx="8"/><rect x="392" y="365" width="36" height="44" rx="8"/>
+          <rect x="392" y="415" width="36" height="44" rx="8"/><rect x="392" y="465" width="36" height="44" rx="8"/>
+          <rect x="392" y="515" width="36" height="44" rx="8"/>
+        </g>
+        <!-- vzduchové prostory -->
+        <path class="air" d="M108 188 C140 176 160 150 200 146 C260 140 320 145 362 158 L374 165 L374 196 L300 200 C240 200 180 202 140 198 Z"/>
+        <path class="air" d="M132 212 C200 204 290 203 345 214 L346 300 C300 300 200 290 134 262 Z"/>
+        <path class="air" d="M334 160 L376 165 C380 260 380 340 376 434 L344 434 L342 372 L310 358 L326 330 L332 260 Z"/>
+        <!-- zadní stěna hltanu se svaly (stah posouvá sousto dolů) -->
+        <path id="constr" d="M378 200 L378 432 L388 432 L388 200 Z" fill="#F9DCE6" stroke="#E2A9BD" stroke-width="1.5"/>
+        <!-- tvrdé patro -->
+        <path d="M134 207 C200 199 260 199 302 206" fill="none" stroke="#C9B9A3" stroke-width="9" stroke-linecap="round"/>
+        <!-- zuby -->
+        <rect x="129" y="204" width="11" height="19" rx="4" fill="#fff" stroke="#CFC6B8" stroke-width="1.5"/>
+        <g id="lowTeeth"><rect x="131" y="246" width="11" height="18" rx="4" fill="#fff" stroke="#CFC6B8" stroke-width="1.5"/></g>
+        <!-- jazyk -->
+        <path id="tongue" fill="#F3A9B9" stroke="#D97F95" stroke-width="2"/>
+        <!-- hrtan (pohybuje se) -->
+        <g id="larynx">
+          <!-- hrtan: zjednodušená stěna hrtanu (vpředu ohryzek) -->
+          <path d="M300 360 L292 362 C284 365 278 372 280 381 L289 428 C290 434 292 440 292 450 L346 450 L346 386 L340 378 Z" fill="#ECE6F6" stroke="#B9A9DE" stroke-width="2.5"/>
+          <!-- dutina hrtanu a průdušnice -->
+          <path class="air" d="M300 362 L311 356 L344 370 L338 384 L338 650 C338 664 300 664 300 650 Z"/>
+          <path d="M300 364 L300 650 M338 384 L338 650" stroke="#9CC4E4" stroke-width="3" fill="none"/>
+          <g stroke="#9CC4E4" stroke-width="2" fill="none">
+            <path d="M300 466 h38 M300 494 h38 M300 522 h38 M300 550 h38 M300 578 h38 M300 606 h38 M300 634 h38"/>
+          </g>
+          <polygon id="vfL" points="300,408 300,428 309,418" fill="#E07A97" stroke="#B85573" stroke-width="1.5"/>
+          <polygon id="vfR" points="338,408 338,428 329,418" fill="#E07A97" stroke="#B85573" stroke-width="1.5"/>
+          <ellipse cx="284" cy="353" rx="12" ry="6" fill="#EFE7D2" stroke="#CDBE98" stroke-width="2"/>
+          <g id="epi" transform="translate(300 366) rotate(-42)">
+            <path d="M0 -5 C22 -7 44 -6 62 0 C44 7 22 7 0 5 Z" fill="#F7C6A3" stroke="#DE9F78" stroke-width="1.5"/>
+          </g>
+          <g class="lbl" data-lbl>
+            <line x1="272" y1="353" x2="222" y2="349"/><rect x="132" y="334" width="90" height="30" rx="10"/><text x="177" y="355" text-anchor="middle">Jazylka</text>
+            <line x1="288" y1="385" x2="222" y2="388"/><rect x="146" y="373" width="76" height="30" rx="10"/><text x="184" y="394" text-anchor="middle">Hrtan</text>
+            <line x1="303" y1="418" x2="222" y2="428"/><rect x="128" y="413" width="94" height="30" rx="10"/><text x="175" y="434" text-anchor="middle">Hlasivky</text>
+            <line x1="300" y1="500" x2="222" y2="492"/><rect x="108" y="477" width="114" height="30" rx="10"/><text x="165" y="498" text-anchor="middle">Průdušnice</text>
+            <line x1="342" y1="325" x2="384" y2="312"/><rect x="384" y="286" width="112" height="52" rx="10"/><text x="440" y="307" text-anchor="middle">Příklopka</text><text x="440" y="328" text-anchor="middle">hrtanová</text>
+          </g>
+        </g>
+        <!-- žaludek, jícen a dolní jícnový svěrač -->
+        <path d="M352 708 C340 718 304 722 292 748 C282 772 302 798 342 798 C382 798 398 772 394 746 C392 728 378 714 364 708 Z" fill="#DCEFD6" stroke="#8CC08A" stroke-width="2.5"/>
+        <path id="eso" fill="#DCEFD6" stroke="#8CC08A" stroke-width="2.5"/>
+        <g fill="#F9DCE6" stroke="#E2A9BD" stroke-width="1.5"><rect x="343" y="692" width="8" height="20" rx="3"/><rect x="365" y="692" width="8" height="20" rx="3"/></g>
+        <!-- měkké patro -->
+        <g id="velum" transform="translate(300 207) rotate(48)">
+          <path d="M0 -6 C25 -8 50 -6 62 2 C50 10 25 10 0 8 Z" fill="#F0B4C2" stroke="#D88A9E" stroke-width="1.5"/>
+        </g>
+        <!-- proud vzduchu -->
+        <path id="airflow" d="M104 190 C150 178 250 166 352 176 C366 205 366 250 358 300 C350 330 332 346 320 372 L319 540"/>
+        <!-- sousto -->
+        <path id="bolus" fill="#F2B866" stroke="#D18F35" stroke-width="2"/>
+        <text id="peri" x="356" y="400" font-size="16" fill="#2F6B52" text-anchor="middle" opacity="0">▼</text>
+        <!-- popisky -->
+        <g class="lbl" data-lbl>
+          <rect x="190" y="154" width="128" height="28" rx="10"/><text x="254" y="174" text-anchor="middle">Nosní dutina</text>
+          <line x1="178" y1="202" x2="172" y2="130"/><rect x="140" y="100" width="120" height="30" rx="10"/><text x="200" y="121" text-anchor="middle">Tvrdé patro</text>
+          <line x1="328" y1="228" x2="380" y2="150"/><rect x="362" y="120" width="124" height="30" rx="10"/><text x="424" y="141" text-anchor="middle">Měkké patro</text>
+          <line x1="368" y1="240" x2="390" y2="206"/><rect x="386" y="176" width="70" height="30" rx="10"/><text x="421" y="197" text-anchor="middle">Hltan</text>
+          <rect x="398" y="232" width="72" height="30" rx="10"/><text x="434" y="253" text-anchor="middle">Páteř</text>
+          <rect x="196" y="262" width="70" height="28" rx="10"/><text x="231" y="282" text-anchor="middle">Jazyk</text>
+          <line x1="361" y1="434" x2="380" y2="432"/><rect x="380" y="410" width="118" height="52" rx="10"/><text x="439" y="431" text-anchor="middle">Horní jícnový</text><text x="439" y="452" text-anchor="middle">svěrač</text>
+          <line x1="364" y1="505" x2="384" y2="505"/><rect x="384" y="491" width="70" height="30" rx="10"/><text x="419" y="512" text-anchor="middle">Jícen</text>
+          <line x1="374" y1="702" x2="380" y2="702"/><rect x="380" y="672" width="118" height="52" rx="10"/><text x="439" y="693" text-anchor="middle">Dolní jícnový</text><text x="439" y="714" text-anchor="middle">svěrač</text>
+          <line x1="250" y1="757" x2="292" y2="757"/><rect x="160" y="742" width="90" height="30" rx="10"/><text x="205" y="763" text-anchor="middle">Žaludek</text>
+        </g>
+      </svg>
+      <div class="progress" aria-hidden="true"><i id="bar"></i></div>
+      <div class="controls">
+        <button class="btn" id="prev" aria-label="Předchozí fáze">◀ Zpět</button>
+        <button class="btn primary" id="play">▶ Přehrát</button>
+        <button class="btn" id="next" aria-label="Další fáze">Další ▶</button>
+      </div>
+      <button class="btn all" id="all">▶ Přehrát celé polknutí</button>
+    </section>
+
+    <section class="panel" aria-live="polite">
+      <h2 id="pTitle"></h2>
+      <div class="badges" id="pBadges"></div>
+      <ul id="pList"></ul>
+    </section>
+
+  <div class="toggles">
+        <label><input type="checkbox" id="labels" checked> Zobrazit popisky</label>
+        <label><input type="checkbox" id="slow"> Pomalejší přehrávání</label>
+  </div>
+
+  <p class="note">Obrázek je schematický a zjednodušený. Skutečné polknutí je mnohem rychlejší. Informace slouží ke vzdělávání a nenahrazují konzultaci s klinickým logopedem. Použité zdroje najdete v části Zdroje.</p>
+</div>
+
+<script>
+(function(){
+const REST =[140,262, 138,250,150,238,172,236, 210,232,250,228,285,232, 315,236,332,255,330,285, 330,305,326,322,322,338];
+const CUP  =[140,262, 138,248,150,232,168,226, 200,240,255,256,290,228, 318,224,334,252,330,285, 330,305,326,322,322,338];
+const FRONT=[140,262, 136,240,150,212,172,208, 210,205,240,222,275,248, 310,262,332,268,330,290, 330,305,326,322,322,338];
+const BACK =[140,262, 136,240,150,212,172,208, 220,204,270,204,300,212, 330,220,346,250,346,285, 344,305,338,322,330,338];
+
+const BASE={bx:105,by:250,bo:0,tongue:REST,velum:48,epi:-42,lx:0,ly:0,vf:1,ues:0,wave:0,waveY:230,chew:0,breathe:1,eso:0,mix:0,peri:0,stom:0,cam:0,les:0};
+
+// Zdroje: [L] Lasotová a kol. 2024 (Medicína pro praxi); [SP] Panara a kol.: Physiology, Swallowing. StatPearls 2023
+const PHASES=[
+ {title:"1. Orální přípravná fáze", badges:[["mint","Řízeno vůlí"]],                              // [L]
+  list:["Pevné jídlo rozkoušeme a jazyk ho zpracuje v sousto.",                                    // [SP]
+        "Tekutinu jazyk udrží v ústech: vpředu ji utěsní jazyk a vzadu patro."],                   // [SP]
+  dur:7000, frames:[
+   {t:0},{t:600,bx:118,by:248,bo:1},{t:1500,bx:215,by:234},{t:1700,chew:1},{t:4600,chew:1,mix:1},
+   {t:5400,chew:0,bx:232,by:232,tongue:CUP},{t:7000}]},
+ {title:"2. Orální (transportní) fáze", badges:[["mint","Řízeno vůlí"]],                           // [L]
+  list:["Jazyk se zvedá a posouvá sousto dozadu do hltanu."],                                        // [SP]
+  dur:5000, frames:[
+   {t:0},{t:400},{t:2000,tongue:FRONT,bx:300,by:238},{t:3600,tongue:BACK,bx:350,by:262,velum:30},{t:4300,bx:358,by:272,velum:20},{t:5000}]},
+ {title:"3. Hltanová (faryngální) fáze", badges:[["peach","Reflex – nelze ovlivnit vůlí"],["blue","Trvání: asi 1 sekunda"]], // [L][SP]
+  list:["Měkké patro se zvedne a uzavře cestu do nosu.",                                             // [SP]
+        "Hltan se zvedne a posune dopředu.",                                                         // [SP]
+        "Hlasivky se zavřou a dýchání se na okamžik zastaví.",                                       // [SP]
+        "Stahy svalů hltanu posouvají sousto dolů a horní jícnový svěrač se otevře."],               // [SP]
+  dur:6000, frames:[
+   {t:0},{t:800,velum:-8,breathe:0,lx:-12,ly:-22,vf:0,epi:8,bx:358,by:292},{t:1400,wave:1,waveY:240},
+   {t:2400,by:350,waveY:310,ues:.5,eso:.2},{t:3200,by:410,bx:358,waveY:375,ues:1,eso:.7},{t:4000,by:455,waveY:415,eso:1},
+   {t:4600,ues:0,wave:0,by:470},{t:5400,lx:0,ly:0,vf:1,epi:-42,velum:48,breathe:1,tongue:REST},{t:6000}]},
+ {title:"4. Jícnová (ezofageální) fáze", badges:[["peach","Reflex – nelze ovlivnit vůlí"]],           // [L][SP]
+  list:["Vlna svalových stahů (peristaltika) posouvá sousto jícnem dolů.",                           // [SP]
+        "Sousto projde dolním jícnovým svěračem do žaludku."],                                       // [SP]
+  dur:8000, frames:[
+   {t:0},{t:600,peri:1},{t:4800,by:688,cam:1},{t:5200,les:1},{t:6000,by:748,bx:340,peri:0},{t:6500,les:0},{t:7200,bo:0},{t:8000}]}
+];
+
+// full states, carried across phases
+let carry=Object.assign({},BASE);
+PHASES.forEach(p=>{p.frames=p.frames.map(f=>{carry=Object.assign({},carry,f);return carry;});});
+
+const $=id=>document.getElementById(id);
+const lerp=(a,b,k)=>a+(b-a)*k;
+const ease=k=>k<.5?2*k*k:1-Math.pow(-2*k+2,2)/2;
+function mixState(a,b,k){const o={};for(const key in a){const va=a[key],vb=b[key];o[key]=Array.isArray(va)?va.map((v,i)=>lerp(v,vb[i],k)):lerp(va,vb,k);}return o;}
+function stateAt(p,t){const f=p.frames;if(t<=0)return f[0];for(let i=1;i<f.length;i++){if(t<=f[i].t){const k=ease((t-f[i-1].t)/((f[i].t-f[i-1].t)||1));return mixState(f[i-1],f[i],k);}}return f[f.length-1];}
+
+const tongueEl=$('tongue'),velum=$('velum'),epi=$('epi'),lar=$('larynx'),bolus=$('bolus'),eso=$('eso'),air=$('airflow'),teeth=$('lowTeeth');
+function tonguePath(a){const n=a.map(v=>v.toFixed(1));return `M${n[0]} ${n[1]} C${n[2]} ${n[3]} ${n[4]} ${n[5]} ${n[6]} ${n[7]} C${n[8]} ${n[9]} ${n[10]} ${n[11]} ${n[12]} ${n[13]} C${n[14]} ${n[15]} ${n[16]} ${n[17]} ${n[18]} ${n[19]} C${n[20]} ${n[21]} ${n[22]} ${n[23]} ${n[24]} ${n[25]} L300 348 L210 302 C175 292 150 278 140 262 Z`;}
+function esoPath(s){const cx=358,top=432,bot=712,L=[],R=[];
+  for(let y=top;y<=bot;y+=6){let hw=3+11*Math.exp(-Math.pow((y-s.by)/20,2))*s.eso*s.bo;
+    if(y<top+18)hw+=7*s.ues;
+    if(y>=692)hw=Math.min(hw,1.5+8*s.les);
+    if(s.peri>.01&&y>s.by-48&&y<s.by-20)hw=Math.min(hw,1.6+1.4*(1-s.peri));
+    L.push([cx-hw,y]);R.push([cx+hw,y]);}
+  return 'M'+L.map(p=>p[0].toFixed(1)+' '+p[1]).join(' L')+' L'+R.reverse().map(p=>p[0].toFixed(1)+' '+p[1]).join(' L')+' Z';}
+// nepravidelný tvar sousta
+const BL=[1,.8,1.12,.86,1.18,.82,1.06,.9,1.15,.84];
+function blob(cx,cy,rx,ry,ph=0){const n=BL.length,p=[];for(let i=0;i<n;i++){const a=i/n*2*Math.PI,k=BL[i]*(1+.08*Math.sin(ph+i*1.7));p.push([cx+Math.cos(a)*rx*k,cy+Math.sin(a)*ry*k]);}
+  const f=v=>v.toFixed(1);let d=`M${f(p[0][0])} ${f(p[0][1])}`;
+  for(let i=0;i<n;i++){const p0=p[(i+n-1)%n],p1=p[i],p2=p[(i+1)%n],p3=p[(i+2)%n];
+    d+=` C${f(p1[0]+(p2[0]-p0[0])/6)} ${f(p1[1]+(p2[1]-p0[1])/6)} ${f(p2[0]-(p3[0]-p1[0])/6)} ${f(p2[1]-(p3[1]-p1[1])/6)} ${f(p2[0])} ${f(p2[1])}`;}
+  return d+' Z';}
+// stah svalů zadní stěny hltanu
+function constrPath(s){let d='M388 200';for(let y=200;y<=432;y+=6){const x=378-14*s.wave*Math.exp(-Math.pow((y-s.waveY)/13,2));d+=` L${x.toFixed(1)} ${y}`;}return d+' L388 432 Z';}
+const hex=(c1,c2,k)=>{const a=c1.match(/\w\w/g).map(h=>parseInt(h,16)),b=c2.match(/\w\w/g).map(h=>parseInt(h,16));return '#'+a.map((v,i)=>Math.round(lerp(v,b[i],k)).toString(16).padStart(2,'0')).join('');};
+
+function render(s,now){
+  const chewPh=s.chew>0.01?(0.5-0.5*Math.cos(now/700*2*Math.PI)):0;
+  tongueEl.setAttribute('d',tonguePath(s.tongue));
+  velum.setAttribute('transform',`translate(300 207) rotate(${s.velum.toFixed(1)})`);
+  lar.setAttribute('transform',`translate(${s.lx.toFixed(1)} ${s.ly.toFixed(1)})`);
+  epi.setAttribute('transform',`translate(300 366) rotate(${s.epi.toFixed(1)})`);
+  const w=9+10*(1-s.vf);
+  $('vfL').setAttribute('points',`300,408 300,428 ${300+w},418`);
+  $('vfR').setAttribute('points',`338,408 338,428 ${338-w},418`);
+  $('constr').setAttribute('d',constrPath(s));
+  teeth.setAttribute('transform',`translate(0 ${(s.chew*7*chewPh).toFixed(1)})`);
+  eso.setAttribute('d',esoPath(s));
+  const wob=s.chew*Math.sin(now/350);
+  const inEso=s.by>430&&s.by<712?Math.min(1,(s.by-430)/30):0;
+  bolus.setAttribute('d',blob(s.bx+wob*3,s.by,13-3*inEso+wob*2,13+4*inEso-wob*2,now/300));
+  bolus.setAttribute('opacity',s.bo.toFixed(2));
+  bolus.setAttribute('fill',hex('D9965A','F4C67E',s.mix));
+  air.setAttribute('opacity',(0.12+0.88*s.breathe).toFixed(2));
+  air.classList.toggle('run',s.breathe>0.5);
+  $('peri').setAttribute('y',(s.by-26).toFixed(1));$('peri').setAttribute('opacity',(s.peri*s.bo).toFixed(2));
+  $('svg').setAttribute('viewBox',`84 ${(8+220*s.cam).toFixed(1)} 420 552`);
+}
+
+let cur=0,t=0,playing=false,chain=false,last=0;
+const factor=()=>($('slow').checked?1.7:1)*(chain?0.65:1);
+function showPhase(i){
+  cur=i;t=0;const p=PHASES[i];
+  $('pTitle').textContent=p.title;
+  $('pBadges').innerHTML=p.badges.map(b=>`<span class="badge b-${b[0]}">${b[1]}</span>`).join('');
+  $('pList').innerHTML=p.list.map(x=>`<li>${x}</li>`).join('');
+  document.querySelectorAll('.pill').forEach((el,k)=>{if(k===i)el.setAttribute('aria-current','step');else el.removeAttribute('aria-current');});
+  $('prev').disabled=i===0;$('next').disabled=i===PHASES.length-1;
+  $('svg').setAttribute('aria-label','Animace: '+p.title);
+  render(stateAt(p,0),performance.now());$('bar').style.width='0%';
+}
+function setPlayBtn(){const on=chain&&playing;$('all').classList.toggle('on',on);$('all').textContent=on?'Přehrává se celé polknutí – fáze '+(cur+1)+' ze 4':'▶ Přehrát celé polknutí';$('play').textContent=playing?'❚❚ Pauza':(t>=PHASES[cur].dur*factor()?'↺ Znovu':'▶ Přehrát');}
+function loop(now){
+  if(!playing)return;
+  t+=Math.min(now-last,60);last=now;
+  const p=PHASES[cur],D=p.dur*factor();
+  if(t>=D){t=D;render(stateAt(p,p.dur),now);$('bar').style.width='100%';
+    if(chain&&cur<PHASES.length-1){showPhase(cur+1);setPlayBtn();}else{playing=false;chain=false;t=PHASES[cur].dur*factor();setPlayBtn();return;}}
+  else{render(stateAt(p,t/factor()),now);$('bar').style.width=(chain?100*(cur+t/D)/PHASES.length:100*t/D)+'%';}
+  requestAnimationFrame(loop);
+}
+function play(){if(t>=PHASES[cur].dur*factor())t=0;playing=true;last=performance.now();setPlayBtn();requestAnimationFrame(loop);}
+function pause(){playing=false;chain=false;setPlayBtn();}
+
+$('play').onclick=()=>playing?pause():play();
+$('prev').onclick=()=>{pause();showPhase(cur-1);play();};
+$('next').onclick=()=>{pause();showPhase(cur+1);play();};
+$('all').onclick=()=>{pause();showPhase(0);chain=true;play();};
+document.querySelectorAll('.pill').forEach(el=>el.onclick=()=>{pause();showPhase(+el.dataset.i);play();});
+$('labels').onchange=e=>document.querySelectorAll('[data-lbl]').forEach(g=>g.style.display=e.target.checked?'':'none');
+document.addEventListener('keydown',e=>{if(e.target.tagName==='INPUT')return;
+  if(e.key==='ArrowRight'&&cur<3)$('next').click();if(e.key==='ArrowLeft'&&cur>0)$('prev').click();});
+let sx=null;$('svg').addEventListener('touchstart',e=>{sx=e.touches[0].clientX;},{passive:true});
+$('svg').addEventListener('touchend',e=>{if(sx===null)return;const dx=e.changedTouches[0].clientX-sx;sx=null;
+  if(dx<-60&&cur<3)$('next').click();else if(dx>60&&cur>0)$('prev').click();});
+showPhase(0);setPlayBtn();
+// pro testování: ?phase=3&t=2000
+const q=new URLSearchParams(location.search);if(q.has('phase')){showPhase(+q.get('phase'));const p=PHASES[cur];t=+q.get('t')||0;render(stateAt(p,t),0);}
+})();
+</script>
+</body>
+</html>

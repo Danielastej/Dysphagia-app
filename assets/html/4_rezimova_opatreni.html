@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Režimová opatření</title>
+<style>
+  /* ===== SPOLEČNÝ STYL APLIKACE – stejný ve všech modulech ===== */
+  :root{
+    --bg:#FBF8F3; --card:#FFFFFF; --text:#2B2735; --muted:#5C566B; --line:#E3DCEE; --focus:#5E4F99;
+    /* paleta: světlá (pozadí) / pastel (kresba) / obrys / tmavá (text) */
+    --lav:#E6E0F5;   --lav-p:#CDC0EC;   --lav-e:#9C89CF;   --lav-d:#5E4F99;
+    --mint:#DDF0E6;  --mint-p:#A6D9BC;  --mint-e:#6DB08E;  --mint-d:#2F6B52;
+    --peach:#FDE6D8; --peach-p:#F4C097; --peach-e:#D9935E; --peach-d:#9A4A22;
+    --blue:#E1EEF9;  --blue-p:#B3D0EE;  --blue-e:#7FA6D1;  --blue-d:#2D5B86;
+    --rose:#FBE3EC;  --rose-p:#EFAFC6;  --rose-e:#CF7C9C;  --rose-d:#9B3D62;
+    --teal:#DDF1F3;  --teal-p:#A7DADF;  --teal-e:#6FB5BB;  --teal-d:#2E6E74;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;font-size:18px;line-height:1.45}
+  button{touch-action:manipulation;font:inherit}
+  :focus-visible{outline:4px solid var(--focus);outline-offset:2px}
+  [hidden]{display:none !important}
+  .wrap{max-width:520px;margin:0 auto;padding:calc(12px + env(safe-area-inset-top)) 14px calc(28px + env(safe-area-inset-bottom))}
+  header h1{font-size:1.35rem;margin:4px 0 2px;color:var(--lav-d);line-height:1.25}
+  header p{margin:0 0 12px;color:var(--muted);font-size:.9rem}
+  /* výběr (fáze, nervy, …) */
+  .pills{display:grid;grid-template-columns:repeat(var(--cols,4),1fr);gap:6px;margin-bottom:10px}
+  .pill{position:relative;border:2px solid var(--line);background:var(--card);border-radius:14px;padding:12px 2px 6px;min-height:64px;font-size:.78rem;color:var(--text);cursor:pointer;text-align:center;line-height:1.2;overflow:hidden}
+  .pill b{display:block;font-size:1.25rem;color:var(--pd,var(--lav-d))}
+  .pill::before{content:"";position:absolute;left:0;right:0;top:0;height:8px;background:var(--pb,var(--lav-p))}
+  .pill[aria-pressed="true"],.pill[aria-current="step"]{background:var(--ps,var(--lav));border-color:var(--pe,var(--lav-e))}
+  /* obrázek */
+  .stage{background:var(--card);border-radius:20px;border:2px solid var(--line);padding:6px 6px 10px}
+  svg{width:100%;height:auto;display:block}
+  .progress{height:8px;background:var(--lav);border-radius:6px;margin:6px 6px 0;overflow:hidden}
+  .progress i{display:block;height:100%;width:0;background:var(--lav-d);border-radius:6px}
+  /* tlačítka */
+  .controls{display:grid;grid-template-columns:1fr 1.35fr 1fr;gap:8px;margin:10px 4px 0}
+  .btn{min-height:58px;border-radius:14px;border:2px solid var(--lav-d);background:var(--card);color:var(--lav-d);font-size:.95rem;font-weight:700;cursor:pointer;padding:6px 8px}
+  .btn.primary{background:var(--lav-d);color:#fff}
+  .btn:disabled{opacity:.35;cursor:default}
+  .btn.all{display:block;width:100%;margin:12px 0 0;background:var(--mint);border-color:var(--mint-d);color:var(--mint-d);font-size:1rem;min-height:60px}
+  .btn.all.on{background:var(--mint-d);color:#fff}
+  /* textový panel */
+  .panel{background:var(--card);border-radius:20px;border:2px solid var(--line);padding:16px 18px;margin-top:12px}
+  .panel h2{margin:0 0 6px;font-size:1.25rem;color:var(--lav-d);line-height:1.25;display:flex;align-items:center;gap:10px}
+  .panel .sub{margin:-2px 0 8px;color:var(--muted);font-size:.9rem;font-style:italic}
+  .chip{flex:none;min-width:40px;height:40px;padding:0 6px;border-radius:20px;border:2px solid;display:inline-grid;place-items:center;font-size:1rem;font-weight:800}
+  .badges{display:flex;flex-wrap:wrap;gap:6px;margin:4px 0 12px}
+  .badge{border-radius:999px;padding:3px 12px;font-size:.85rem;font-weight:700}
+  .b-mint{background:var(--mint);color:var(--mint-d)}
+  .b-peach{background:var(--peach);color:var(--peach-d)}
+  .b-blue{background:var(--blue);color:var(--blue-d)}
+  .b-lav{background:var(--lav);color:var(--lav-d)}
+  .panel ul{padding-left:1.1em;margin:0}
+  .panel li{margin-bottom:8px}
+  .panel h3{font-size:1rem;margin:14px 0 6px}
+  .warn{background:var(--peach);color:var(--peach-d);border-radius:12px;padding:10px 12px;font-size:.95rem;margin-top:10px}
+  .row{display:flex;align-items:center;gap:12px;padding:10px 0;border:0;border-top:1px solid var(--line);cursor:pointer;background:none;width:100%;text-align:left;color:var(--text)}
+  .row b{display:block}
+  .row small{color:var(--muted);font-size:.88rem;line-height:1.3;display:block}
+  /* přepínače a poznámka */
+  .toggles{display:flex;flex-direction:column;gap:4px;margin-top:12px;font-size:.95rem}
+  .toggles label{display:flex;align-items:center;gap:12px;cursor:pointer;border-radius:10px;padding:8px 4px;min-height:48px}
+  .toggles input{width:28px;height:28px;accent-color:var(--lav-d);flex:none}
+  .note{font-size:.82rem;color:var(--muted);margin-top:14px}
+  /* ===== konec společného stylu ===== */
+  /* SVG */
+  .lbl rect{fill:#fff;stroke:#CFC6E3;stroke-width:1.5}
+  .lbl text{font-size:17px;fill:#2B2735;font-family:inherit}
+  .lbl line{stroke:#9C90BF;stroke-width:1.8}
+  .hideLabels .lbl{display:none}
+  .scene{display:none}
+  .scene.on{display:inline}
+  .run .lbl{opacity:0;animation:show .5s ease-out forwards;animation-delay:var(--d,0s)}
+  .run .torso{transform-box:view-box;transform-origin:265px 385px;animation:sitUp 1.6s .3s ease-in-out both}
+  .run .guide{opacity:0;animation:show .5s ease-out forwards;animation-delay:var(--d,0s)}
+  .run .spoon{animation:spoon 3.2s ease-in-out 2}
+  .run .food{animation:food 3.2s ease-in-out 2}
+  .run .brush{animation:brush .5s ease-in-out 10 alternate}
+  .run .hand{transform-box:view-box;transform-origin:90px 110px;animation:clock 4s linear forwards}
+  @keyframes show{to{opacity:1}}
+  @keyframes sitUp{from{transform:rotate(-16deg)}to{transform:rotate(0)}}
+  @keyframes spoon{0%,100%{transform:translate(-126px,121px)}40%,60%{transform:translate(0,0)}}
+  @keyframes food{0%,45%{opacity:1}55%,92%{opacity:0}100%{opacity:1}}
+  @keyframes brush{from{transform:translateX(-4px)}to{transform:translateX(4px)}}
+  @keyframes clock{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+  @media (prefers-reduced-motion:reduce){.run .lbl,.run .guide,.run .torso,.run .spoon,.run .food,.run .brush,.run .hand{animation:none;opacity:1}}
+  .check{display:flex;align-items:flex-start;gap:12px;cursor:pointer;padding:8px 2px;min-height:48px;font-size:.95rem;border-top:1px solid var(--line)}
+  .check input{width:28px;height:28px;accent-color:var(--lav-d);flex:none;margin:0}
+  .check:has(input:checked) span{color:var(--muted);text-decoration:line-through}
+  /* výběr logopeda: vybraná doporučení tučně, ostatní šedě (kontrast stále ≥ 4,5 : 1) */
+  .panel li.pick,.check.pick span{font-weight:700;color:var(--text)}
+  .panel li.pick::marker{color:var(--mint-d)}
+  .panel li.dim,.check.dim span{color:#77718A}
+  .pnote{margin:0 0 10px;font-size:.9rem;color:var(--mint-d);background:var(--mint);border-radius:10px;padding:6px 10px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Režimová opatření</h1>
+    <p>Vyberte část dne nebo stiskněte <b>Přehrát</b>.</p>
+  </header>
+
+  <nav class="pills" aria-label="Části dne">
+    <button class="pill" data-i="0"><b>1</b>Před jídlem</button>
+    <button class="pill" data-i="1"><b>2</b>Během jídla</button>
+    <button class="pill" data-i="2"><b>3</b>Po jídle</button>
+    <button class="pill" data-i="3"><b>4</b>Hygiena úst</button>
+  </nav>
+
+  <section class="stage">
+    <svg id="svg" viewBox="0 0 420 552" role="img" aria-labelledby="svgDesc">
+      <desc id="svgDesc">Jednoduché obrázky, jak se připravit na jídlo, jak jíst, co dělat po jídle a jak pečovat o ústa.</desc>
+
+      <!-- 1 + 3: sezení u stolu -->
+      <g class="scene" id="sc0">
+        <g id="sitting">
+          <line x1="16" y1="522" x2="404" y2="522" stroke="#E3DCEE" stroke-width="3" stroke-linecap="round"/>
+          <rect x="30" y="318" width="160" height="14" rx="6" fill="#F4C097" stroke="#D9935E" stroke-width="2"/>
+          <rect x="44" y="332" width="12" height="190" rx="4" fill="#F4C097" stroke="#D9935E" stroke-width="2"/>
+          <rect x="164" y="332" width="12" height="190" rx="4" fill="#F4C097" stroke="#D9935E" stroke-width="2"/>
+          <ellipse class="plate" cx="96" cy="313" rx="36" ry="6" fill="#fff" stroke="#CFC6E3" stroke-width="2"/>
+          <ellipse class="plateFood" cx="96" cy="307" rx="17" ry="6" fill="#F2B866" stroke="#D18F35" stroke-width="1.5"/>
+          <rect class="glass" x="148" y="288" width="20" height="26" rx="5" fill="#B3D0EE" stroke="#7FA6D1" stroke-width="2"/>
+          <rect x="216" y="392" width="100" height="14" rx="6" fill="#CDC0EC" stroke="#9C89CF" stroke-width="2"/>
+          <rect x="306" y="226" width="14" height="180" rx="6" fill="#CDC0EC" stroke="#9C89CF" stroke-width="2"/>
+          <rect x="224" y="406" width="10" height="116" rx="4" fill="#CDC0EC" stroke="#9C89CF" stroke-width="2"/>
+          <rect x="300" y="406" width="10" height="116" rx="4" fill="#CDC0EC" stroke="#9C89CF" stroke-width="2"/>
+          <!-- nohy -->
+          <rect x="158" y="368" width="126" height="34" rx="16" fill="#B3D0EE" stroke="#7FA6D1" stroke-width="2"/>
+          <rect x="158" y="372" width="32" height="140" rx="14" fill="#B3D0EE" stroke="#7FA6D1" stroke-width="2"/>
+          <ellipse cx="164" cy="514" rx="28" ry="9" fill="#9C89CF"/>
+          <!-- trup, hlava, ruka -->
+          <g class="torso">
+            <rect x="232" y="220" width="66" height="176" rx="28" fill="#A6D9BC" stroke="#6DB08E" stroke-width="2"/>
+            <rect x="252" y="196" width="24" height="32" rx="8" fill="#FCE7DA" stroke="#E7C3AE" stroke-width="2"/>
+            <path d="M262 116 C292 116 308 138 308 164 C308 192 292 208 264 208 C242 208 230 200 226 190 L216 186 L221 178 L214 168 L222 162 C222 136 236 116 262 116 Z" fill="#FCE7DA" stroke="#E7C3AE" stroke-width="2"/>
+            <circle cx="240" cy="154" r="3.5" fill="#5C566B"/>
+            <path d="M224 186 h8" stroke="#D97F95" stroke-width="2.5" stroke-linecap="round"/>
+            <rect x="242" y="232" width="26" height="92" rx="13" fill="#A6D9BC" stroke="#6DB08E" stroke-width="2"/>
+            <rect x="150" y="298" width="112" height="22" rx="11" fill="#FCE7DA" stroke="#E7C3AE" stroke-width="2"/>
+          </g>
+        </g>
+        <g id="before">
+          <line class="guide" style="--d:2s" x1="300" y1="214" x2="300" y2="396" stroke="#6DB08E" stroke-width="3" stroke-dasharray="8 7"/>
+          <g class="lbl" style="--d:2s"><line x1="300" y1="216" x2="336" y2="132"/><rect x="292" y="104" width="118" height="30" rx="10"/><text x="351" y="125" text-anchor="middle">Rovná záda</text></g>
+          <g class="lbl" style="--d:2.6s"><line x1="186" y1="309" x2="104" y2="250"/><rect x="16" y="222" width="176" height="30" rx="10"/><text x="104" y="243" text-anchor="middle">Předloktí na stole</text></g>
+          <g class="lbl" style="--d:3.2s"><line x1="190" y1="512" x2="250" y2="468"/><rect x="196" y="440" width="140" height="30" rx="10"/><text x="266" y="461" text-anchor="middle">Nohy na podlaze</text></g>
+          <g class="lbl" style="--d:3.8s"><rect x="16" y="40" width="186" height="30" rx="10"/><text x="109" y="61" text-anchor="middle">Bez rozptylování</text></g>
+        </g>
+        <g id="after">
+          <circle cx="90" cy="110" r="46" fill="#fff" stroke="#9C89CF" stroke-width="3"/>
+          <g stroke="#9C89CF" stroke-width="3" stroke-linecap="round"><path d="M90 70 v8 M90 142 v8 M50 110 h8 M122 110 h8"/></g>
+          <line class="hand" x1="90" y1="110" x2="90" y2="80" stroke="#5E4F99" stroke-width="4" stroke-linecap="round"/>
+          <circle cx="90" cy="110" r="5" fill="#5E4F99"/>
+          <g class="lbl" style="--d:.4s"><rect x="16" y="166" width="190" height="30" rx="10"/><text x="111" y="187" text-anchor="middle">Alespoň 15–20 minut</text></g>
+          <g class="lbl" style="--d:1.2s"><line x1="300" y1="216" x2="336" y2="132"/><rect x="262" y="104" width="148" height="30" rx="10"/><text x="336" y="125" text-anchor="middle">Seďte vzpřímeně</text></g>
+          <g class="lbl" style="--d:2s"><line x1="218" y1="184" x2="150" y2="250"/><rect x="16" y="236" width="170" height="30" rx="10"/><text x="101" y="257" text-anchor="middle">Vyčistěte ústa</text></g>
+        </g>
+        <g id="eat">
+          <g transform="translate(222 186)"><g class="spoon">
+            <line x1="6" y1="3" x2="44" y2="26" stroke="#9C89CF" stroke-width="5" stroke-linecap="round"/>
+            <line x1="6" y1="3" x2="44" y2="26" stroke="#CDC0EC" stroke-width="2.5" stroke-linecap="round"/>
+            <ellipse cx="0" cy="0" rx="10" ry="5" fill="#E6E0F5" stroke="#9C89CF" stroke-width="2"/>
+            <ellipse class="food" cx="0" cy="-2.5" rx="5.5" ry="3" fill="#F2B866" stroke="#D18F35" stroke-width="1.2"/>
+          </g></g>
+          <g class="lbl" style="--d:.6s"><rect x="16" y="40" width="196" height="30" rx="10"/><text x="114" y="61" text-anchor="middle">Pomalu, nespěchejte</text></g>
+          <g class="lbl" style="--d:2s"><rect x="16" y="82" width="186" height="30" rx="10"/><text x="109" y="103" text-anchor="middle">Při jídle nemluvte</text></g>
+          <g class="lbl" style="--d:3.4s"><rect x="16" y="124" width="196" height="30" rx="10"/><text x="114" y="145" text-anchor="middle">Polkněte, pak další</text></g>
+          <g class="lbl" style="--d:.6s"><line x1="300" y1="216" x2="336" y2="132"/><rect x="262" y="104" width="148" height="30" rx="10"/><text x="336" y="125" text-anchor="middle">Seďte vzpřímeně</text></g>
+        </g>
+        <g id="clean">
+          <g transform="translate(222 192)"><g class="brush">
+            <rect x="-96" y="-4.5" width="82" height="9" rx="4.5" fill="#A7DADF" stroke="#6FB5BB" stroke-width="2"/>
+            <rect x="-70" y="-2" width="30" height="4" rx="2" fill="#6FB5BB" opacity=".5"/>
+            <rect x="-16" y="-5" width="24" height="10" rx="4" fill="#FFFFFF" stroke="#6FB5BB" stroke-width="2"/>
+            <g fill="#B3D0EE" stroke="#7FA6D1" stroke-width="1.2"><rect x="-14" y="-17" width="4.5" height="12" rx="2"/><rect x="-8" y="-17" width="4.5" height="12" rx="2"/><rect x="-2" y="-17" width="4.5" height="12" rx="2"/><rect x="4" y="-17" width="4.5" height="12" rx="2"/></g>
+          </g></g>
+          <g class="lbl" style="--d:.6s"><rect x="16" y="40" width="226" height="30" rx="10"/><text x="129" y="61" text-anchor="middle">Před jídlem i po jídle</text></g>
+          <g class="lbl" style="--d:1.6s"><rect x="16" y="82" width="250" height="30" rx="10"/><text x="141" y="103" text-anchor="middle">Odstraňte zbytky jídla z úst</text></g>
+          <g class="lbl" style="--d:2.6s"><rect x="16" y="124" width="196" height="30" rx="10"/><text x="114" y="145" text-anchor="middle">Jazyk, tváře i zuby</text></g>
+        </g>
+      </g>
+    </svg>
+    <div class="controls">
+      <button class="btn" id="prev">◀ Zpět</button>
+      <button class="btn primary" id="play">▶ Přehrát</button>
+      <button class="btn" id="next">Další ▶</button>
+    </div>
+    <button class="btn all" id="all">Kontrolní seznam</button>
+  </section>
+
+  <section class="panel" id="panel" aria-live="polite"></section>
+
+  <div class="toggles">
+    <label><input type="checkbox" id="labels" checked> Zobrazit popisky</label>
+  </div>
+  <button class="btn" id="slp" style="width:100%;margin-top:12px;min-height:50px">Nastavení pro logopeda</button>
+
+  <p class="note">Obrázky jsou schematické. Doporučení jsou obecná. Řiďte se vždy tím, co vám doporučil váš klinický logoped nebo lékař. Použité zdroje najdete v části Zdroje.</p>
+</div>
+
+<script>
+(function(){
+const S=[
+ // Zdroje: [M] FN Motol – Poruchy polykání v dospělém věku; [V] Kusyn, Solná – Dysfagie = porucha polykání (Vítkovická nemocnice);
+ // [A] Buršová, Balaštíková – Terapeutické materiály pro osoby s dysfagií (FN u sv. Anny); [L] Lasotová a kol. 2024; [Y] Yoneyama a kol. 2002;
+ // [NZ] NZIP – Obrazovka k jídlu nepatří; [!] = zatím bez zdroje;
+ // [R] Roubalíková – Co je dobré vědět o hygieně dutiny ústní I.; [DU] Dubec, Seydlová, Dostálová – Halitóza
+ // Každé doporučení má stálé označení (id), podle kterého se ukládá výběr logopeda.
+ {title:'1. Před jídlem',scene:'sc0',part:'before',badges:[['blue','Připravte se']],
+  list:[['pred-klid','Jezte bez rozptylování: vypněte televizi i rádio a nedívejte se do mobilu.'],       // [M][NZ]
+        ['pred-usta','Zkontrolujte, že máte prázdná ústa a že zubní náhrada dobře drží.'],               // [M][V]
+        ['pred-sed','Sedněte si ke stolu: rovná záda, předloktí opřená o stůl, nohy na pevné podložce.'],// [A]
+        ['pred-luzko','Pokud jíte na lůžku, zvedněte horní část postele co nejvíce.'],                    // [A]
+        ['pred-unava','Jídlo si načasujte na dobu, kdy nejste unaven/a.'],                                // [M][V]
+        ['pred-uprava','Jídlo a pití mějte v úpravě, kterou vám doporučil logoped.']],                    // [L]
+  warn:''},
+ {title:'2. Během jídla',scene:'sc0',part:'eat',badges:[['mint','Pomalu a v klidu']],
+  list:[['beh-sed','Seďte vzpřímeně, hlavu držte rovně nebo v lehkém předklonu.'],                      // [M][V]
+        ['beh-pomalu','Jezte pomalu a nespěchejte.'],                                                    // [V]
+        ['beh-tv','Při jídle nesledujte televizi ani mobil.'],                                           // [M][NZ]
+        ['beh-mluv','Při žvýkání a polykání nemluvte.'],                                                 // [V]
+        ['beh-sousto','Další sousto dejte do úst, až když jsou ústa prázdná.'],                          // [M][V]
+        ['beh-zapit','Nejdříve polkněte celé sousto, které máte v ústech, a teprve potom se napijte.'],  // [M]
+        ['beh-zaklon','Při pití nezaklánějte hlavu.'],                                                   // [M]
+        ['beh-vicekrat','Je-li potřeba, polkněte vícekrát a po polknutí si odkašlete.']],                // [M]
+  warn:'Kašel nikdy nepotlačujte.'},                                                                     // [V]
+ {title:'3. Po jídle',scene:'sc0',part:'after',badges:[['blue','Alespoň 15–20 minut']],
+  list:[['po-sed','Zůstaňte sedět vzpřímeně alespoň 15–20 minut.'],                                      // [M][V]
+        ['po-usta','Vyčistěte si ústa: jazyk, vnitřní stranu tváří a zuby.'],                            // [M][V]
+        ['po-zbytky','Odstraňte z úst všechny zbytky jídla.']],                                          // [V]
+  warn:''},
+ {title:'4. Hygiena úst',scene:'sc0',part:'clean',badges:[['mint','Před jídlem i po jídle']],
+  list:[['hyg-cisteni','Před jídlem i po každém jídle si vyčistěte ústa: jazyk, vnitřní stranu tváří a zuby.'], // [M][V] (před jídlem: [!])
+        ['hyg-zbytky','Odstraňte z úst zbytky jídla.'],                                                  // [V]
+        ['hyg-krusty','Odstraňte z úst zaschlé hleny a krusty, hlavně z jazyka a patra.'],               // [!]
+        ['hyg-mezizubni','Mezery mezi zuby čistěte mezizubními kartáčky.']],                             // [R]
+  warn:'U starších lidí v péči snížila pravidelná péče o ústa výskyt zápalu plic. Pokud máte zápach z úst, navštivte svého zubního lékaře (stomatologa).'} // [Y] [DU]
+];
+const $=id=>document.getElementById(id),svg=$('svg');
+let cur=0,mode='desc';const done=new Set();
+const KEY='dysfagie-rezim-vyber-logoped';
+let pick=null;try{const v=localStorage.getItem(KEY);if(v){const a=JSON.parse(v);if(Array.isArray(a)&&a.length)pick=new Set(a);}}catch(e){}
+function savePick(){try{if(pick&&pick.size)localStorage.setItem(KEY,JSON.stringify([...pick]));else localStorage.removeItem(KEY);}catch(e){}}
+const cls=id=>pick?(pick.has(id)?'pick':'dim'):'';
+const pickNote=()=>pick?'<p class="pnote">Tučně jsou doporučení, která pro vás vybral váš logoped.</p>':'';
+function restart(){svg.classList.remove('run');void svg.getBoundingClientRect();svg.classList.add('run');}
+function select(i){
+  cur=i;mode='desc';const s=S[i];
+  $('all').classList.remove('on');$('all').textContent='Kontrolní seznam';
+  document.querySelectorAll('.pill').forEach((p,k)=>{if(k===i)p.setAttribute('aria-current','step');else p.removeAttribute('aria-current');});
+  document.querySelectorAll('.scene').forEach(g=>g.classList.toggle('on',g.id===s.scene));
+  ['before','after','eat','clean'].forEach(id=>$(id).style.display=id===s.part?'':'none');
+  document.querySelector('.plateFood').style.display=(s.part==='after'||s.part==='clean')?'none':'';
+  document.querySelector('.plate').style.display=s.part==='clean'?'none':'';document.querySelector('.glass').style.display='';
+  document.querySelector('.torso').style.animationName=s.part==='before'?'':'none';
+  $('prev').disabled=i===0;$('next').disabled=i===S.length-1;
+  $('panel').innerHTML=`<h2>${s.title}</h2><div class="badges">${s.badges.map(b=>`<span class="badge b-${b[0]}">${b[1]}</span>`).join('')}</div>${pickNote()}
+    <ul>${s.list.map(([id,x])=>`<li class="${cls(id)}">${x}</li>`).join('')}</ul>${s.warn?`<div class="warn"><b>Pozor:</b> ${s.warn}</div>`:''}
+    ${i<2?'<button class="btn" id="toHyg" style="width:100%;margin-top:12px;min-height:50px">Přejít na hygienu úst ▶</button>':''}`;
+  if(i<2)$('toHyg').onclick=()=>{select(3);window.scrollTo({top:0,behavior:'smooth'});};
+  svg.setAttribute('aria-label',s.title+'. '+s.list.map(x=>x[1]).join(' '));
+  restart();
+}
+function checklist(){
+  mode='list';$('all').classList.add('on');$('all').textContent='Zpět na popis';
+  $('panel').innerHTML=`<h2>Kontrolní seznam</h2><p style="margin:2px 0 6px;font-size:.95rem">Odškrtněte si, co už máte hotové.</p>`+pickNote()+
+   S.map(s=>`<h3>${s.title}</h3>`+s.list.map(([id,x])=>`<label class="check ${cls(id)}"><input type="checkbox" data-id="${id}" ${done.has(id)?'checked':''}><span>${x}</span></label>`).join('')).join('')+
+   `<button class="btn" id="reset" style="width:100%;margin-top:14px;min-height:50px">Zrušit všechna zaškrtnutí</button>`;
+  $('panel').querySelectorAll('input').forEach(c=>c.onchange=()=>{c.checked?done.add(c.dataset.id):done.delete(c.dataset.id);});
+  $('reset').onclick=()=>{done.clear();checklist();};
+}
+// Nastavení pro logopeda: zaškrtnutá doporučení se zvýrazní, ostatní zešednou. Výběr zůstává uložený v zařízení.
+function setup(){
+  mode='setup';const tmp=new Set(pick||[]);
+  $('all').classList.remove('on');$('all').textContent='Kontrolní seznam';
+  $('panel').innerHTML=`<h2>Nastavení pro logopeda</h2><p style="margin:2px 0 6px;font-size:.95rem">Zaškrtněte doporučení, která jsou pro pacienta vhodná. Ta se pak zobrazí tučně a ostatní šedě. Výběr se uloží jen v tomto zařízení a zůstane i po zavření aplikace.</p>`+
+   S.map(s=>`<h3>${s.title}</h3>`+s.list.map(([id,x])=>`<label class="check"><input type="checkbox" data-id="${id}" ${tmp.has(id)?'checked':''}><span>${x}</span></label>`).join('')).join('')+
+   `<button class="btn primary" id="saveP" style="width:100%;margin-top:14px">Uložit výběr</button>
+    <button class="btn" id="clearP" style="width:100%;margin-top:10px;min-height:50px">Zrušit výběr (zobrazit vše stejně)</button>
+    <button class="btn" id="backP" style="width:100%;margin-top:10px;min-height:50px">Zpět bez uložení</button>`;
+  $('panel').querySelectorAll('input').forEach(c=>c.onchange=()=>{c.checked?tmp.add(c.dataset.id):tmp.delete(c.dataset.id);});
+  const done_=()=>{select(cur);window.scrollTo({top:0,behavior:'smooth'});};
+  $('saveP').onclick=()=>{pick=tmp.size?tmp:null;savePick();done_();};
+  $('clearP').onclick=()=>{pick=null;savePick();done_();};
+  $('backP').onclick=done_;
+  $('panel').scrollIntoView({behavior:'smooth'});
+}
+$('slp').onclick=setup;
+document.querySelectorAll('.pill').forEach(p=>p.onclick=()=>select(+p.dataset.i));
+$('prev').onclick=()=>select(cur-1);$('next').onclick=()=>select(cur+1);
+$('play').onclick=()=>mode!=='desc'?select(cur):restart();
+$('all').onclick=()=>mode==='list'?select(cur):checklist();
+$('labels').onchange=e=>svg.classList.toggle('hideLabels',!e.target.checked);
+document.addEventListener('keydown',e=>{if(e.target.tagName==='INPUT')return;
+  if(e.key==='ArrowRight'&&cur<S.length-1)select(cur+1);if(e.key==='ArrowLeft'&&cur>0)select(cur-1);});
+const q=new URLSearchParams(location.search);
+if(q.get('s')==='list'){select(0);checklist();}else if(q.get('s')==='setup'){select(0);setup();}else select(q.has('s')?+q.get('s'):0);
+})();
+</script>
+</body>
+</html>
